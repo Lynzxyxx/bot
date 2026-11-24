@@ -1,0 +1,22 @@
+{
+  "outputDirectory": "public",
+  "functions": {
+    "api/panel.js": {
+      "maxDuration": 60,
+      "includeFiles": "node_modules/**"
+    },
+    "api/webhook.js": {
+      "maxDuration": 60,
+      "includeFiles": "node_modules/**"
+    },
+    "api/keepalive.js": {
+      "maxDuration": 15
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/keepalive",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}

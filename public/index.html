@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2b3846">
+<title>Pterodactyl</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#2b3846; --bg2:#34434f; --card:#3b4a58; --card2:#4a5967; --line:#4f5f6e;
+  --text:#e8edf2; --muted:#9aa8b5; --blue:#2563eb; --blue2:#3b82f6; --gray:#5a6877; --red:#dc2626;
+  --term:#121a22; --cyan:#22b8d4; --yellow:#f5c542; --green:#34d399; --editor:#1e2233;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Roboto,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px}
+body{min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:980px;margin:0 auto}
+.hide{display:none!important}
+
+/* loader bar (garis cyan di atas, seperti di Pterodactyl) */
+#ptbar{position:fixed;top:0;left:0;height:3px;width:0;background:var(--cyan);box-shadow:0 0 8px var(--cyan);z-index:999;opacity:0;transition:width .25s ease,opacity .3s}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg)}
+.brand{font-size:24px;font-weight:700;letter-spacing:.2px}
+.icons{display:flex;gap:18px;align-items:center}
+.icons[hidden]{display:none}
+.icons button{background:none;border:0;padding:0;cursor:pointer;color:#cfd8e0;display:flex}
+.icons svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.avatar{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe27a,#f5c542 60%,#d9a514);display:block}
+
+/* tabs */
+.tabs{display:flex;overflow-x:auto;background:var(--bg2);scrollbar-width:none;border-bottom:1px solid #2a3642;position:sticky;top:0;z-index:5}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;padding:15px 18px;color:var(--muted);background:none;border:0;border-bottom:2px solid transparent;cursor:pointer;font-weight:500}
+.tab.on{color:#fff;border-bottom-color:var(--cyan)}
+main{padding:16px}
+
+/* buttons */
+.row{display:flex;gap:10px}
+.btn{flex:1;border:0;border-radius:4px;padding:13px 14px;font-weight:700;cursor:pointer;color:#fff;background:var(--gray);transition:filter .15s}
+.btn:hover{filter:brightness(1.1)}.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.blue{background:var(--blue)}.btn.red{background:var(--red)}.btn.gray{background:var(--gray)}.btn.sm{padding:9px 12px;flex:none}
+.btn.save{background:var(--blue2);letter-spacing:.5px}
+
+/* console */
+.term{margin-top:12px;background:var(--term);border-radius:4px 4px 0 0;height:46vh;min-height:300px;overflow:auto;padding:10px 12px;font:500 12.5px/1.45 "Roboto Mono",ui-monospace,Menlo,monospace;color:#fff;word-break:break-word;white-space:pre-wrap}
+.term .ln{display:block}
+.term .daemon b{color:var(--yellow);font-weight:700}
+.term .host{color:#cfe3f7}.term .host b{color:#7dd3fc}
+.term .err{background:#b91c1c;border-radius:2px;padding:0 2px}
+.term .warn{color:#fbbf24}.term .ok{color:var(--green)}.term .dim{color:#7c8b99}
+.cmd{display:flex;align-items:center;background:#1a232d;border-radius:0 0 4px 4px;padding:0 12px;border-top:1px solid #0d141b}
+.cmd span{color:#9aa8b5;font-size:20px;margin-right:8px}
+.cmd input{flex:1;background:none;border:0;outline:0;padding:14px 0;color:#fff;font:500 13px "Roboto Mono",monospace}
+.cmd input::placeholder{color:#7c8b99}
+
+/* indikator (stat cards) */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.stat{background:var(--card);border-radius:4px;padding:12px 14px;border-left:3px solid #55697b;min-width:0;position:relative;overflow:hidden}
+.stat.run{border-left-color:var(--green)}.stat.start{border-left-color:var(--yellow)}.stat.off{border-left-color:var(--red)}
+.stat.live::after{content:"";position:absolute;right:10px;top:10px;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 #34d39988;animation:pulse 1.8s infinite}
+.stat.start::after{background:var(--yellow);box-shadow:0 0 0 0 #f5c54288}
+@keyframes pulse{70%{box-shadow:0 0 0 9px #0000}100%{box-shadow:0 0 0 0 #0000}}
+.stat small{display:block;font-size:12px;color:#b7c3ce;font-weight:500}
+.stat strong{display:block;font-size:19px;font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat strong i{font-style:normal;color:var(--muted);font-weight:400;font-size:15px}
+.stat.dimmed strong{color:#7f8d9a}
+.meter{height:3px;background:#2d3a46;border-radius:2px;margin-top:8px;overflow:hidden}
+.meter b{display:block;height:100%;width:0;background:var(--cyan);transition:width .8s ease}
+.meter b.hot{background:#f87171}
+.charts{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}
+.chart{background:var(--card);border-radius:4px;padding:10px 12px 8px}
+.chart header{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#c8d3dc;font-weight:500;margin-bottom:4px}
+.chart header b{color:#fff;font-weight:700}
+.chart canvas{width:100%;height:84px;display:block}
+.note{background:#3a3524;border:1px solid #6b5d22;color:#f3de92;border-radius:4px;padding:10px 12px;margin-bottom:12px;font-size:13px;line-height:1.45}
+.note.info{background:#233646;border-color:#2f5470;color:#bcdcf5}
+.note code{background:#0003;padding:1px 5px;border-radius:3px}
+
+/* files */
+.fbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.fbtns .full{grid-column:1/-1}
+.crumbrow{display:flex;align-items:center;gap:12px;margin:16px 12px 10px}
+.crumbrow input{width:16px;height:16px;accent-color:var(--blue);flex:none}
+.crumb{display:flex;align-items:center;flex-wrap:wrap;gap:4px;color:var(--muted);font-size:14px}
+.crumb a{color:#cfd8e0;cursor:pointer}.crumb a.cur{color:#fff;font-weight:500}.crumb .sep{opacity:.5;margin:0 2px}
+.list{background:var(--bg)}
+.item{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:4px;padding:13px 12px;margin-bottom:4px;cursor:pointer}
+.item:hover{background:#42525f}
+.item input[type=checkbox]{width:16px;height:16px;accent-color:var(--blue);flex:none}
+.item .ic{width:20px;height:20px;flex:none;color:#aab6c1}
+.item .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#dfe6ec}
+.item .sz{color:var(--muted);font-size:12px}
+.item .dots{background:none;border:0;color:#cdd7e0;font-size:20px;padding:0 6px;cursor:pointer;letter-spacing:1px}
+.menu{position:fixed;background:#2d3a46;border:1px solid var(--line);border-radius:6px;box-shadow:0 8px 24px #0007;z-index:50;min-width:160px;overflow:hidden}
+.menu button{display:block;width:100%;text-align:left;background:none;border:0;padding:12px 16px;cursor:pointer;color:var(--text)}
+.menu button:hover{background:#3b4a58}.menu .danger{color:#ff8b8b}
+.empty{text-align:center;color:var(--muted);padding:30px 0;font-size:13px}
+.selbar{position:sticky;bottom:10px;display:flex;gap:10px;align-items:center;justify-content:space-between;background:#243040;border:1px solid var(--line);border-radius:6px;padding:10px 14px;margin-top:10px}
+.errcard{background:#fff;color:#2d3a46;border-radius:8px;padding:34px 20px;text-align:center;margin-top:16px;position:relative}
+.errcard h2{margin:14px 0 4px;font-size:26px;line-height:1.1;color:#1f2a35}.errcard p{margin:0;color:#7b8794}
+.errcard svg{width:150px;height:auto}
+.errcard button{position:absolute;left:12px;top:12px;width:34px;height:34px;border-radius:50%;border:0;background:#2563eb;color:#fff;cursor:pointer;font-size:18px}
+.dropzone{outline:2px dashed var(--cyan);outline-offset:-6px}
+
+/* upload manager */
+#upbox{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;background:#233040;border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 30px #000a;z-index:90;padding:12px 14px}
+#upbox h5{margin:0 0 8px;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+#upbox .bar{height:6px;background:#17212b;border-radius:3px;overflow:hidden}
+#upbox .bar b{display:block;height:100%;background:var(--cyan);width:0;transition:width .2s}
+#upbox ul{list-style:none;margin:10px 0 0;padding:0;max-height:140px;overflow:auto;font-size:12.5px}
+#upbox li{display:flex;justify-content:space-between;gap:10px;padding:3px 0;color:#c8d3dc}
+#upbox li span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#upbox li.fail{color:#ff9d9d}#upbox li.ok{color:#86efac}
+#upbox .x{background:none;border:0;cursor:pointer;color:#9fb0bf;font-size:18px;padding:0 4px}
+
+/* editor + syntax */
+.editor{display:flex;background:var(--editor);border-radius:4px;overflow:hidden;height:56vh;min-height:320px;border:1px solid #2b3050}
+.gut{flex:none;padding:12px 8px 12px 10px;color:#5b6486;text-align:right;font:12.5px/1.5 "Roboto Mono",monospace;user-select:none;overflow:hidden;white-space:pre;background:#1a1e2e}
+.code{position:relative;flex:1;overflow:hidden}
+.code pre,.code textarea{position:absolute;inset:0;margin:0;padding:12px;font:12.5px/1.5 "Roboto Mono",monospace;white-space:pre;tab-size:2;border:0}
+.code pre{overflow:hidden;color:#d6deeb;pointer-events:none}
+.code textarea{background:transparent;color:transparent;-webkit-text-fill-color:transparent;caret-color:#fff;resize:none;outline:0;overflow:auto}
+.code textarea::selection{background:#3b5bdb88;-webkit-text-fill-color:transparent}
+.tk-k{color:#f07178}.tk-s{color:#ecc48d}.tk-n{color:#f78c6c}.tk-c{color:#6b7599;font-style:italic}.tk-f{color:#82aaff}
+.edbar{display:flex;gap:10px;margin-top:12px}
+.edbar select{flex:1;background:#4a5967;border:0;border-radius:4px;padding:12px;color:#fff}
+.edbar .btn{flex:1.4}
+
+/* forms */
+.card{background:var(--card);border-radius:4px;padding:16px;margin-bottom:14px}
+.card h3{margin:0 0 4px;font-size:16px}.card p{margin:4px 0 12px;color:#b7c3ce;font-size:13px;line-height:1.5}
+label.f{display:block;font-size:12px;color:#b7c3ce;margin:12px 0 5px;font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+.in,textarea.in{width:100%;background:#2a3744;border:1px solid var(--line);border-radius:4px;padding:11px 12px;color:#fff;outline:0}
+.in:focus{border-color:var(--cyan)}
+textarea.in{min-height:90px;font:13px "Roboto Mono",monospace;resize:vertical}
+.chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer;margin:10px 0;font-size:14px;line-height:1.35}
+.chk input{width:18px;height:18px;accent-color:#2563eb;flex:none;margin-top:1px}
+.chk small{display:block;color:var(--muted);font-size:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nodes{background:#2d3a46;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.nodes label{display:flex;align-items:center;gap:12px;padding:15px 16px;cursor:pointer;border-bottom:1px solid #394857}
+.nodes label:last-child{border:0}
+.nodes label.dis{opacity:.45;cursor:not-allowed}
+.nodes .t{flex:1}.nodes small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.nodes input{appearance:none;width:22px;height:22px;border-radius:50%;border:2px solid #8896a3;flex:none;display:grid;place-content:center}
+.nodes input:checked{border-color:#8ab4ff}.nodes input:checked::after{content:"";width:12px;height:12px;border-radius:50%;background:#8ab4ff}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #46566a;font-size:13.5px}
+.kv span:first-child{color:#b7c3ce}.kv span:last-child{text-align:right;word-break:break-all}
+pre.json{background:var(--term);border-radius:4px;padding:12px;overflow:auto;font:12px/1.5 "Roboto Mono",monospace;margin:10px 0 0}
+.copy{display:flex;gap:8px}.copy .in{font-family:"Roboto Mono",monospace;font-size:12.5px}
+
+/* login + modal + toast */
+.login{max-width:380px;margin:12vh auto 0;padding:0 16px}
+.login .card{padding:22px}.login h2{margin:0 0 14px;font-size:20px}
+.modal{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal .box{background:#33414f;border-radius:8px;padding:20px;width:100%;max-width:440px;max-height:88vh;overflow:auto}
+.modal h4{margin:0 0 12px;font-size:17px}.modal .row{margin-top:16px}
+.modal .prog{height:8px;background:#1d2833;border-radius:4px;overflow:hidden;margin:14px 0 8px}
+.modal .prog b{display:block;height:100%;width:0;background:var(--cyan);transition:width .25s}
+.modal .fl{max-height:150px;overflow:auto;font:12px/1.5 "Roboto Mono",monospace;color:#ffb4b4;margin-top:8px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#111a22ee;border:1px solid var(--line);padding:11px 18px;border-radius:8px;z-index:200;max-width:90vw;font-size:14px;box-shadow:0 6px 20px #0008}
+.toast.err{border-color:#b91c1c;color:#ffb4b4}.toast.ok{border-color:#15803d;color:#a7f3d0}
+footer{text-align:center;color:#8a98a6;font-size:12px;padding:22px 0 30px}
+@media(min-width:720px){.stats{grid-template-columns:repeat(4,1fr)}.charts{grid-template-columns:repeat(3,1fr)}.term{height:52vh}}
+</style>
+</head>
+<body>
+<div id="ptbar"></div>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">Pterodactyl</div>
+    <div class="icons" id="icons" hidden>
+      <button title="Files" onclick="go('files')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+      <button title="Console" onclick="go('console')"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></svg></button>
+      <button title="Pengaturan" onclick="go('settings')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></button>
+      <button title="Keluar" onclick="logout()"><span class="avatar"></span></button>
+    </div>
+  </div>
+
+  <div id="login" class="login hide">
+    <div class="card">
+      <h2>Masuk ke Panel</h2>
+      <div id="setupWarn" class="note hide">ADMIN_PASSWORD belum di-set. Tambahkan di <b>Vercel → Settings → Environment Variables</b> (min. 6 karakter), lalu Redeploy.</div>
+      <label class="f" style="margin-top:0">Password admin</label>
+      <input id="pw" class="in" type="password" placeholder="••••••••" autocomplete="current-password">
+      <div class="row" style="margin-top:14px"><button class="btn blue" id="loginBtn">Login</button></div>
+    </div>
+  </div>
+
+  <div id="app" class="hide">
+    <nav class="tabs" id="tabs">
+      <button class="tab on" data-t="console">Console</button>
+      <button class="tab" data-t="files">Files</button>
+      <button class="tab" data-t="schedules">Schedules</button>
+      <button class="tab" data-t="startup">Startup</button>
+      <button class="tab" data-t="settings">Settings</button>
+    </nav>
+    <main>
+      <div id="banner"></div>
+
+      <!-- CONSOLE -->
+      <section id="t-console">
+        <div class="row">
+          <button class="btn blue" id="bStart">Start</button>
+          <button class="btn gray" id="bRestart">Restart</button>
+          <button class="btn red" id="bStop">Stop</button>
+        </div>
+        <div class="term" id="term"></div>
+        <div class="cmd"><span>»</span><input id="cmd" placeholder="Type a command..." autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+        <div class="stats" id="stats"></div>
+        <div class="charts">
+          <div class="chart"><header><span>Memory usage</span><b id="chMemV">-</b></header><canvas id="chMem"></canvas></div>
+          <div class="chart"><header><span>CPU load</span><b id="chCpuV">-</b></header><canvas id="chCpu"></canvas></div>
+          <div class="chart"><header><span>Network <small style="color:#9aa8b5">(in / out per detik)</small></span><b id="chNetV">-</b></header><canvas id="chNet"></canvas></div>
+        </div>
+      </section>
+
+      <!-- FILES -->
+      <section id="t-files" class="hide">
+        <div id="fileList">
+          <div class="fbtns">
+            <button class="btn gray full" id="bMkdir">Create Directory</button>
+            <button class="btn blue" id="bUpload">Upload</button>
+            <button class="btn blue" id="bNew">New File</button>
+          </div>
+          <input type="file" id="upFiles" multiple hidden>
+          <input type="file" id="upFolder" webkitdirectory multiple hidden>
+          <div class="crumbrow"><input type="checkbox" id="selAll" title="Pilih semua"><div class="crumb" id="crumb"></div></div>
+          <div class="list" id="list"></div>
+          <div class="selbar hide" id="selbar"><span id="selCount"></span><button class="btn red sm" id="bDelSel">Delete</button></div>
+        </div>
+        <div id="fileEdit" class="hide">
+          <div class="crumb" id="edCrumb" style="margin:16px 4px 10px"></div>
+          <div class="editor"><div class="gut" id="gut">1</div><div class="code"><pre id="hl" aria-hidden="true"></pre><textarea id="ta" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off"></textarea></div></div>
+          <div class="edbar">
+            <select id="lang"><option>JavaScript</option><option>JSON</option><option>Markdown</option><option>Plain Text</option></select>
+            <button class="btn save" id="bSave">SAVE CONTENT</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCHEDULES -->
+      <section id="t-schedules" class="hide">
+        <div class="card">
+          <h3>Keep-Alive (pembangun Vercel)</h3>
+          <p>Bot ini memakai <b>webhook</b>: Telegram yang menelepon server saat ada pesan, jadi bot tetap menjawab 24 jam tanpa perlu "dibangunkan". Endpoint di bawah tetap disediakan untuk memantau &amp; otomatis memasang ulang webhook bila hilang.</p>
+          <label class="f" style="margin-top:0">URL keep-alive</label>
+          <div class="copy"><input class="in" id="kaUrl" readonly><button class="btn gray sm" id="kaCopy">Copy</button></div>
+          <div class="row" style="margin-top:12px"><button class="btn blue" id="kaPing">Ping sekarang</button></div>
+          <pre class="json hide" id="kaOut"></pre>
+        </div>
+        <div class="card">
+          <h3>Ping otomatis dari panel</h3>
+          <p>Selama tab panel ini terbuka, panel memanggil endpoint di atas tiap 4 menit.</p>
+          <label class="chk"><input type="checkbox" id="autoPing"><span>Aktifkan auto-ping</span></label>
+        </div>
+        <div class="card">
+          <h3>Ping dari luar (disarankan)</h3>
+          <p>Daftarkan URL keep-alive di <b>UptimeRobot</b> atau <b>cron-job.org</b> (interval 5 menit, gratis). Vercel Cron bawaan (<code>vercel.json</code>) pada paket Hobby hanya boleh 1× per hari.</p>
+        </div>
+      </section>
+
+      <!-- STARTUP -->
+      <section id="t-startup" class="hide">
+        <div class="card">
+          <h3>Bot Telegram</h3>
+          <p>Token bot &amp; ID owner dibaca dari <b>config script kamu sendiri</b> (config.js / .env / <code>new Telegraf(token)</code>). Panel tidak meminta token — cukup upload script lalu tekan <b>Start</b>.</p>
+          <div id="tkBox"></div>
+          <label class="f">File utama (opsional — kosongkan = otomatis)</label>
+          <input class="in" id="sEntry" placeholder="otomatis: package.json → index.js / main.js / bot.js" autocomplete="off">
+          <div class="row" style="margin-top:14px"><button class="btn blue" id="sSave">Simpan</button></div>
+        </div>
+        <div class="card">
+          <h3>Auto-restart (pemulih CPU)</h3>
+          <p>Kalau CPU terus tinggi atau bot error beruntun, panel otomatis me-restart server (pasang ulang webhook + reset cache). Jeda minimal 5 menit antar restart.</p>
+          <label class="chk"><input type="checkbox" id="arOn"><span>Aktifkan auto-restart</span></label>
+          <div class="two">
+            <div><label class="f" style="margin-top:4px">Batas CPU (%)</label><input class="in" id="arCpu" type="number" min="10" max="100" inputmode="numeric"></div>
+            <div><label class="f" style="margin-top:4px">Berturut-turut (kali)</label><input class="in" id="arStreak" type="number" min="1" max="20" inputmode="numeric"></div>
+          </div>
+          <div class="row" style="margin-top:14px"><button class="btn blue" id="arSave">Simpan</button></div>
+        </div>
+        <div class="card">
+          <h3>Versi NodeJS</h3>
+          <p id="nodeNote"></p>
+          <div class="nodes" id="nodes"></div>
+          <div class="row" style="margin-top:14px"><button class="btn blue" id="nApply">Terapkan versi</button></div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="t-settings" class="hide">
+        <div class="card"><h3>Server</h3><div id="kv"></div>
+          <div class="row" style="margin-top:12px"><button class="btn gray" id="bRecount">Hitung ulang disk</button></div></div>
+        <div class="card">
+          <h3>Tambah admin</h3>
+          <p>Buat env baru di Vercel: <code>ADMIN_PASSWORD2</code>, <code>ADMIN_PASSWORD3</code>, dst. (min. 6 karakter, jumlah bebas), lalu Redeploy. Menghapus env = mencabut akses admin itu.</p>
+        </div>
+        <div class="card">
+          <h3>Webhook Telegram</h3>
+          <div class="row" style="margin-top:10px"><button class="btn gray" id="whInfo">Cek webhook</button></div>
+          <pre class="json hide" id="whOut"></pre>
+        </div>
+        <div class="card"><div class="row"><button class="btn red" onclick="logout()">Keluar dari panel</button></div></div>
+      </section>
+    </main>
+    <footer>Pterodactyl® © 2015 - 2026</footer>
+  </div>
+</div>
+
+<div id="upbox" class="hide"></div>
+<div id="modalRoot"></div>
+<div id="toast" class="toast hide"></div>
+
+<script>
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let token = localStorage.getItem('ptero_token') || '';
+let tab = 'console', cwd = '/', openFile = null, items = [], selected = new Set(), lastConsole = '', lastAct = Date.now(), paused = false, pollTimer = null, pingT = null;
+
+/* ---------- loader bar ---------- */
+const bar = { n: 0, v: 0, t: null,
+  start() { if (this.n++ === 0) { this.v = 8; this.draw(true); this.t = setInterval(() => { this.v += (92 - this.v) * 0.12; this.draw(true); }, 220); } },
+  done() { if (--this.n <= 0) { this.n = 0; clearInterval(this.t); this.v = 100; this.draw(true); setTimeout(() => { if (!this.n) this.draw(false); }, 280); } },
+  draw(on) { const b = $('#ptbar'); b.style.opacity = on ? 1 : 0; b.style.width = (on ? this.v : 0) + '%'; if (!on) setTimeout(() => { if (!this.n) b.style.width = '0'; }, 320); } };
+
+/* ---------- util ---------- */
+function toast(msg, kind = '') { const t = $('#toast'); t.textContent = msg; t.className = 'toast ' + kind; clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.add('hide'), 3600); }
+async function api(a, { method = 'GET', body, query = {}, quiet = false } = {}) {
+  const qs = new URLSearchParams({ a, ...query });
+  if (!quiet) bar.start();
+  try {
+    const r = await fetch('/api/panel?' + qs, { method: body ? 'POST' : method, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    const j = await r.json().catch(() => ({ ok: false, error: 'Respons server tidak valid (HTTP ' + r.status + '). Cek Logs di Vercel.' }));
+    if (r.status === 401 && a !== 'login') { logout(true); throw new Error('Sesi berakhir, login lagi'); }
+    if (!j.ok) throw new Error(j.error || 'Gagal');
+    return j;
+  } finally { if (!quiet) bar.done(); }
+}
+const fmtBytes = (n) => { n = Number(n) || 0; if (n < 1024) return n + ' Bytes'; const u = ['KiB', 'MiB', 'GiB', 'TiB']; let i = -1; do { n /= 1024; i++; } while (n >= 1024 && i < 3); return n.toFixed(n < 10 ? 2 : 1) + ' ' + u[i]; };
+const fmtUp = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ${s % 60}s`; };
+function openModal(html) { $('#modalRoot').innerHTML = `<div class="modal"><div class="box">${html}</div></div>`; return $('#modalRoot .box'); }
+const closeModal = () => { $('#modalRoot').innerHTML = ''; };
+function ask(title, value = '', ph = '') {
+  return new Promise((res) => {
+    const b = openModal(`<h4>${esc(title)}</h4><input class="in" id="mIn" value="${esc(value)}" placeholder="${esc(ph)}" autocomplete="off" autocapitalize="off"><div class="row"><button class="btn gray" id="mNo">Batal</button><button class="btn blue" id="mYes">OK</button></div>`);
+    const done = (v) => { closeModal(); res(v); };
+    $('#mNo', b).onclick = () => done(null); $('#mYes', b).onclick = () => done($('#mIn', b).value);
+    $('#mIn', b).onkeydown = (e) => { if (e.key === 'Enter') done($('#mIn', b).value); if (e.key === 'Escape') done(null); };
+    $('#mIn', b).focus(); $('#mIn', b).select();
+  });
+}
+function confirmBox(title, text = '', yes = 'Ya, lanjut') {
+  return new Promise((res) => {
+    const b = openModal(`<h4>${esc(title)}</h4><p style="margin:0;color:#c8d3dc;font-size:14px;line-height:1.5">${esc(text)}</p><div class="row"><button class="btn gray" id="mNo">Batal</button><button class="btn red" id="mYes">${esc(yes)}</button></div>`);
+    $('#mNo', b).onclick = () => { closeModal(); res(false); }; $('#mYes', b).onclick = () => { closeModal(); res(true); };
+  });
+}
+
+/* ---------- auth ---------- */
+async function boot() {
+  const st = await fetch('/api/panel?a=setup').then((r) => r.json()).catch(() => ({}));
+  if (token) { try { await api('status', { quiet: true }); showApp(); return; } catch { token = ''; localStorage.removeItem('ptero_token'); } }
+  $('#login').classList.remove('hide'); $('#app').classList.add('hide'); $('#icons').hidden = true;
+  if (st.configured === false) $('#setupWarn').classList.remove('hide');
+}
+$('#loginBtn').onclick = async () => {
+  try { const j = await api('login', { body: { password: $('#pw').value } }); token = j.token; localStorage.setItem('ptero_token', token); $('#pw').value = ''; showApp(); }
+  catch (e) { toast(e.message, 'err'); }
+};
+$('#pw').onkeydown = (e) => { if (e.key === 'Enter') $('#loginBtn').click(); };
+function logout(silent) { token = ''; localStorage.removeItem('ptero_token'); clearTimeout(pollTimer); clearInterval(pingT); if (!silent) toast('Anda keluar'); boot(); }
+function showApp() { $('#login').classList.add('hide'); $('#app').classList.remove('hide'); $('#icons').hidden = false; go('console'); schedulePoll(0); }
+
+/* ---------- tabs ---------- */
+function go(t) {
+  tab = t;
+  document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('on', b.dataset.t === t));
+  document.querySelectorAll('main > section').forEach((s) => s.classList.toggle('hide', s.id !== 't-' + t));
+  if (t === 'files') { if (!openFile) loadFiles(); }
+  if (t === 'startup') loadStartup();
+  if (t === 'schedules') loadSchedules();
+  if (t === 'settings') loadSettings();
+  if (t === 'console') { lastConsole = ''; pollConsole(); pollStatus(); }
+}
+$('#tabs').onclick = (e) => { const b = e.target.closest('.tab'); if (b) go(b.dataset.t); };
+
+/* ---------- polling hemat kuota: cepat saat aktif, melambat saat idle, berhenti jika lama idle ---------- */
+function touch() { lastAct = Date.now(); if (paused && token) { paused = false; $('#banner').dataset.paused = ''; schedulePoll(0); } }
+['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach((ev) => addEventListener(ev, touch, { passive: true }));
+function schedulePoll(ms) { clearTimeout(pollTimer); pollTimer = setTimeout(tick, ms); }
+async function tick() {
+  if (!token) return;
+  const idle = Date.now() - lastAct;
+  if (idle > 15 * 60000) { paused = true; $('#banner').dataset.paused = '1'; renderBanner(); return; }
+  if (!document.hidden && tab === 'console') { await Promise.all([pollConsole(), pollStatus()]); }
+  schedulePoll(document.hidden ? 20000 : idle > 120000 ? 20000 : 3000);
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { touch(); schedulePoll(0); } });
+
+/* ---------- console + indikator hidup ---------- */
+const S = { mem: [], cpu: [], inb: [], outb: [] }; const MAXPT = 40;
+let lastStatus = null, lastNet = null, upBase = 0, upAt = 0;
+const push = (arr, v) => { arr.push(v); if (arr.length > MAXPT) arr.shift(); };
+
+function meter(pct, hot) { return `<div class="meter"><b class="${hot ? 'hot' : ''}" style="width:${Math.max(0, Math.min(100, pct))}%"></b></div>`; }
+function renderStats(s) {
+  lastStatus = s; upBase = s.uptime; upAt = Date.now();
+  const off = s.status !== 'running';
+  const cls = s.status === 'running' ? 'run live' : s.status === 'starting' ? 'start live' : 'off';
+  const label = { running: 'Running', starting: 'Starting', offline: 'Offline' }[s.status] || s.status;
+  const dim = off ? ' dimmed' : '';
+  const cpu = Number(s.cpu) || 0;
+  $('#stats').innerHTML = `
+    <div class="stat ${off ? 'off' : 'run'}"><small>Address</small><strong>${esc(s.address || '-')}</strong></div>
+    <div class="stat ${cls}"><small>Uptime</small><strong id="upv">${off ? label : fmtUp(s.uptime)}</strong></div>
+    <div class="stat${dim}"><small>CPU Load</small><strong>${off ? 'Offline' : cpu.toFixed(2) + '%'} ${off ? '' : '<i>/ ∞</i>'}</strong>${off ? '' : meter(cpu, cpu >= (s.cpuLimit || 90))}</div>
+    <div class="stat${dim}"><small>Memory</small><strong>${off ? 'Offline' : fmtBytes(s.memory)} ${off ? '' : '<i>/ ∞</i>'}</strong>${off ? '' : meter((s.memory / (1024 * 1024 * 1024)) * 100, false)}</div>
+    <div class="stat"><small>Disk</small><strong>${fmtBytes(s.disk)} <i>/ ∞</i></strong></div>
+    <div class="stat${dim}"><small>Network (Inbound)</small><strong>${off ? 'Offline' : fmtBytes(s.netIn)}</strong></div>
+    <div class="stat${dim}"><small>Network (Outbound)</small><strong>${off ? 'Offline' : fmtBytes(s.netOut)}</strong></div>
+    <div class="stat"><small>Pesan diproses</small><strong>${s.requests} <i>${s.errors ? '(' + s.errors + ' error)' : ''}${s.restarts ? ' · ' + s.restarts + '× auto-restart' : ''}</i></strong></div>`;
+  $('#bStart').disabled = s.status !== 'offline'; $('#bStop').disabled = s.status === 'offline';
+  renderBanner();
+  // data grafik
+  const now = Date.now(); let inRate = 0, outRate = 0;
+  if (lastNet) { const dt = Math.max(1, (now - lastNet.t) / 1000); inRate = Math.max(0, (s.netIn - lastNet.i) / dt); outRate = Math.max(0, (s.netOut - lastNet.o) / dt); }
+  lastNet = { t: now, i: s.netIn, o: s.netOut };
+  push(S.mem, off ? 0 : s.memory); push(S.cpu, off ? 0 : cpu); push(S.inb, inRate); push(S.outb, outRate);
+  drawCharts();
+}
+function renderBanner() {
+  const s = lastStatus; let h = '';
+  if (s && !s.persistent) h += `<div class="note"><b>Penyimpanan belum tersambung.</b> File yang kamu edit hanya disimpan di memori sementara dan bisa hilang. Sambungkan <b>Upstash for Redis</b> (Vercel → Storage → Marketplace), pastikan env <code>KV_REST_API_URL</code> &amp; <code>KV_REST_API_TOKEN</code> ada, lalu Redeploy.</div>`;
+  if (paused) h += `<div class="note info">Auto-refresh dijeda karena lama tidak ada aktivitas (menghemat kuota Redis). Sentuh layar untuk melanjutkan.</div>`;
+  $('#banner').innerHTML = h;
+}
+setInterval(() => { const el = $('#upv'); if (el && lastStatus && lastStatus.status === 'running') el.textContent = fmtUp(upBase + (Date.now() - upAt)); }, 1000);
+
+function spark(cv, series, { max, min = 0 } = {}) {
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight; if (!w) return;
+  cv.width = w * dpr; cv.height = h * dpr; const c = cv.getContext('2d'); c.scale(dpr, dpr); c.clearRect(0, 0, w, h);
+  c.strokeStyle = '#4a5b6a55'; c.lineWidth = 1; for (let i = 1; i < 4; i++) { const y = (h / 4) * i; c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke(); }
+  let top = max || Math.max(1, ...series.flatMap((s) => s.d)); top *= 1.15;
+  series.forEach(({ d, color }) => {
+    if (d.length < 2) return; const step = w / (MAXPT - 1), x0 = w - (d.length - 1) * step;
+    const pts = d.map((v, i) => [x0 + i * step, h - 2 - ((v - min) / (top - min)) * (h - 6)]);
+    c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.strokeStyle = color; c.lineWidth = 1.6; c.lineJoin = 'round'; c.stroke();
+    c.lineTo(pts[pts.length - 1][0], h); c.lineTo(pts[0][0], h); c.closePath(); c.fillStyle = color + '26'; c.fill();
+  });
+}
+function drawCharts() {
+  const last = (a) => (a.length ? a[a.length - 1] : 0);
+  spark($('#chMem'), [{ d: S.mem, color: '#60a5fa' }]); $('#chMemV').textContent = fmtBytes(last(S.mem));
+  spark($('#chCpu'), [{ d: S.cpu, color: '#22b8d4' }], { max: 100 }); $('#chCpuV').textContent = last(S.cpu).toFixed(2) + '%';
+  spark($('#chNet'), [{ d: S.inb, color: '#34d399' }, { d: S.outb, color: '#a78bfa' }]); $('#chNetV').textContent = fmtBytes(last(S.inb)) + ' / ' + fmtBytes(last(S.outb));
+}
+addEventListener('resize', () => { if (tab === 'console') drawCharts(); });
+
+async function pollStatus() { if (!token) return; try { renderStats(await api('status', { quiet: true })); } catch (e) {} }
+const ANSI16 = ['#6b7280', '#ef4444', '#22c55e', '#eab308', '#60a5fa', '#d946ef', '#22d3ee', '#e5e7eb', '#9ca3af', '#f87171', '#4ade80', '#facc15', '#93c5fd', '#e879f9', '#67e8f9', '#ffffff'];
+const c256 = (n) => { if (n < 16) return ANSI16[n]; if (n >= 232) { const v = 8 + (n - 232) * 10; return `rgb(${v},${v},${v})`; } n -= 16; const r = Math.floor(n / 36), g = Math.floor((n % 36) / 6), b = n % 6, f = (x) => (x ? 55 + x * 40 : 0); return `rgb(${f(r)},${f(g)},${f(b)})`; };
+function ansi(str) {
+  const re = /\u001b\[([0-9;]*)m/g; let st = {}, last = 0, out = '', m;
+  const wrap = (t) => { if (!t) return ''; const css = (st.fg ? 'color:' + st.fg + ';' : '') + (st.bg ? 'background:' + st.bg + ';padding:0 3px;border-radius:2px;' : '') + (st.b ? 'font-weight:700;' : '') + (st.i ? 'font-style:italic;' : '') + (st.u ? 'text-decoration:underline;' : ''); return css ? `<span style="${css}">${esc(t)}</span>` : esc(t); };
+  while ((m = re.exec(str))) {
+    out += wrap(str.slice(last, m.index)); last = m.index + m[0].length;
+    const c = m[1] === '' ? [0] : m[1].split(';').map(Number);
+    for (let i = 0; i < c.length; i++) {
+      const n = c[i];
+      if (n === 0) st = {}; else if (n === 1) st.b = 1; else if (n === 3) st.i = 1; else if (n === 4) st.u = 1; else if (n === 22) st.b = 0; else if (n === 39) st.fg = ''; else if (n === 49) st.bg = '';
+      else if (n >= 30 && n <= 37) st.fg = ANSI16[n - 30]; else if (n >= 90 && n <= 97) st.fg = ANSI16[n - 90 + 8];
+      else if (n >= 40 && n <= 47) st.bg = ANSI16[n - 40]; else if (n >= 100 && n <= 107) st.bg = ANSI16[n - 100 + 8];
+      else if ((n === 38 || n === 48) && c[i + 1] === 5) { st[n === 38 ? 'fg' : 'bg'] = c256(c[i + 2]); i += 2; }
+      else if ((n === 38 || n === 48) && c[i + 1] === 2) { st[n === 38 ? 'fg' : 'bg'] = `rgb(${c[i + 2]},${c[i + 3]},${c[i + 4]})`; i += 4; }
+    }
+  }
+  return out + wrap(str.slice(last));
+}
+function colorize(l) {
+  const m = /\u001b\[/.test(l.m) ? ansi(l.m) : esc(l.m);
+  if (l.k === 'daemon') return `<span class="ln daemon">${m.replace(/^(\[Pterodactyl Daemon\]:)/, '<b>$1</b>')}</span>`;
+  if (l.k === 'host') return `<span class="ln host">${m.replace(/^(container@pterodactyl~)/, '<b>$1</b>')}</span>`;
+  return `<span class="ln ${l.k}">${m}</span>`;
+}
+async function pollConsole() {
+  if (!token || tab !== 'console') return;
+  try {
+    const j = await api('console', { quiet: true }); const key = JSON.stringify(j.lines.slice(-3)) + j.lines.length;
+    if (key === lastConsole) return; lastConsole = key;
+    const t = $('#term'); const stick = t.scrollTop + t.clientHeight > t.scrollHeight - 40;
+    t.innerHTML = j.lines.map(colorize).join(''); if (stick) t.scrollTop = t.scrollHeight;
+  } catch (e) {}
+}
+async function power(action) {
+  const all = ['#bStart', '#bRestart', '#bStop'].map((s) => $(s)); all.forEach((b) => (b.disabled = true));
+  try { await api('power', { body: { action } }); toast(action === 'stop' ? 'Server dihentikan' : 'Server berjalan', 'ok'); }
+  catch (e) { toast(e.message, 'err'); }
+  all.forEach((b) => (b.disabled = false)); lastConsole = ''; pollConsole(); pollStatus();
+}
+$('#bStart').onclick = () => power('start'); $('#bRestart').onclick = () => power('restart'); $('#bStop').onclick = () => power('stop');
+$('#cmd').onkeydown = async (e) => {
+  if (e.key !== 'Enter') return; const v = e.target.value; e.target.value = ''; if (!v.trim()) return;
+  try { await api('command', { body: { cmd: v } }); } catch (er) { toast(er.message, 'err'); } lastConsole = ''; pollConsole(); pollStatus();
+};
+
+/* ---------- files ---------- */
+const join = (a, b) => (a === '/' ? '' : a) + '/' + b;
+const ICON = {
+  dir: '<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z"/></svg>',
+  file: '<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm7 1.5V9h5.5L13 3.5ZM8 13h8v1.5H8V13Zm0 3h8v1.5H8V16Z"/></svg>',
+  zip: '<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm7 1.5V9h5.5L13 3.5ZM9 11h2v1.5H9V11Zm2 1.5h2V14h-2v-1.5Zm-2 1.5h2v1.5H9V14Zm2 1.5h2V17h-2v-1.5Z"/></svg>',
+};
+const isZip = (n) => /\.zip$/i.test(n);
+function crumbHtml(path, file) {
+  const parts = path.split('/').filter(Boolean); let acc = ''; let h = '<span class="sep">/</span><a data-p="/">home</a><span class="sep">/</span><a data-p="/" class="' + (parts.length ? '' : 'cur') + '">container</a>';
+  parts.forEach((p, i) => { acc += '/' + p; const last = i === parts.length - 1; h += `<span class="sep">/</span><a data-p="${esc(acc)}" class="${last ? 'cur' : ''}" ${file && last ? 'data-file="1"' : ''}>${esc(p)}</a>`; });
+  if (!parts.length) h += '<span class="sep">/</span>';
+  return h;
+}
+const ERR_SVG = '<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg"><circle cx="118" cy="40" r="26" fill="#e8ecf1"/><rect x="30" y="38" width="48" height="70" rx="6" fill="#2d3a8c"/><rect x="38" y="50" width="32" height="6" rx="3" fill="#6f7fe0"/><rect x="38" y="64" width="32" height="6" rx="3" fill="#6f7fe0"/><circle cx="56" cy="92" r="6" fill="#f5c542"/><rect x="92" y="50" width="86" height="56" rx="5" fill="#3a4b66"/><rect x="98" y="56" width="74" height="44" rx="3" fill="#cfd8e6"/><rect x="128" y="108" width="14" height="10" fill="#3a4b66"/><rect x="112" y="118" width="46" height="5" rx="2" fill="#3a4b66"/></svg>';
+async function loadFiles(dir = cwd) {
+  try {
+    const j = await api('files', { query: { dir } }); cwd = j.dir; items = j.items; selected.clear();
+    $('#crumb').innerHTML = crumbHtml(cwd); renderList();
+  } catch (e) {
+    $('#list').innerHTML = `<div class="errcard"><button onclick="loadFiles()" title="Muat ulang">⟳</button>${ERR_SVG}<h2>Something went wrong</h2><p>${esc(e.message)}</p></div>`;
+  }
+}
+$('#crumb').onclick = (e) => { const a = e.target.closest('a'); if (a) loadFiles(a.dataset.p); };
+function updSel() { const n = selected.size; $('#selbar').classList.toggle('hide', !n); $('#selCount').textContent = n + ' dipilih'; $('#selAll').checked = items.length > 0 && n === items.length; }
+function renderList() {
+  $('#list').innerHTML = items.length ? items.map((it, i) => `
+    <div class="item" data-i="${i}">
+      <input type="checkbox" data-c="${i}" ${selected.has(it.name) ? 'checked' : ''}>
+      ${it.type === 'dir' ? ICON.dir : isZip(it.name) ? ICON.zip : ICON.file}
+      <span class="nm">${esc(it.name)}</span>
+      ${it.type === 'file' ? `<span class="sz">${fmtBytes(it.size)}</span>` : ''}
+      <button class="dots" data-m="${i}">•••</button>
+    </div>`).join('') : '<div class="empty">Folder kosong</div>';
+  updSel();
+}
+$('#selAll').onchange = (e) => { selected = e.target.checked ? new Set(items.map((i) => i.name)) : new Set(); renderList(); };
+$('#list').onclick = (e) => {
+  const c = e.target.closest('[data-c]'); if (c) { const it = items[c.dataset.c]; c.checked ? selected.add(it.name) : selected.delete(it.name); updSel(); e.stopPropagation(); return; }
+  const m = e.target.closest('[data-m]'); if (m) { e.stopPropagation(); return showMenu(m, items[m.dataset.m]); }
+  const row = e.target.closest('.item'); if (!row) return; const it = items[row.dataset.i];
+  it.type === 'dir' ? loadFiles(join(cwd, it.name)) : openEditor(join(cwd, it.name), false, it.size);
+};
+async function downloadFile(path, name) {
+  const st = await api('stat', { query: { path } }); const parts = [];
+  for (let i = 0; i < st.chunks; i++) {
+    const r = await api('readChunk', { query: { path, i }, quiet: i > 0 });
+    const bin = atob(r.data); const u = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k); parts.push(u);
+    if (st.chunks > 1) toast(`Mengunduh ${name}… ${Math.round(((i + 1) / st.chunks) * 100)}%`);
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(parts)); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+}
+function showMenu(btn, it) {
+  document.querySelectorAll('.menu').forEach((m) => m.remove());
+  const r = btn.getBoundingClientRect(); const m = document.createElement('div'); m.className = 'menu';
+  m.style.top = Math.min(r.bottom + 4, innerHeight - 230) + 'px'; m.style.right = Math.max(innerWidth - r.right, 8) + 'px';
+  m.innerHTML = (it.type === 'file' ? (isZip(it.name) ? '<button data-x="unzip">Unarchive</button>' : '') + '<button data-x="edit">Edit</button><button data-x="dl">Download</button>' : '<button data-x="open">Buka</button>') + '<button data-x="ren">Rename</button><button data-x="del" class="danger">Delete</button>';
+  document.body.appendChild(m);
+  m.onclick = async (e) => {
+    const x = e.target.dataset.x; m.remove(); const p = join(cwd, it.name);
+    try {
+      if (x === 'edit') openEditor(p, false, it.size); else if (x === 'open') loadFiles(p);
+      else if (x === 'unzip') unarchive(p);
+      else if (x === 'dl') await downloadFile(p, it.name);
+      else if (x === 'ren') { const nn = await ask('Rename / pindahkan', p); if (nn && nn !== p) { await api('rename', { body: { from: p, to: nn } }); loadFiles(); } }
+      else if (x === 'del') { if (await confirmBox('Hapus ' + it.name + '?', it.type === 'dir' ? 'Folder beserta seluruh isinya akan dihapus permanen.' : 'File akan dihapus permanen.', 'Hapus')) { await api('delete', { body: { paths: [p] } }); loadFiles(); } }
+    } catch (er) { toast(er.message, 'err'); }
+  };
+  setTimeout(() => document.addEventListener('click', () => m.remove(), { once: true }), 0);
+}
+$('#bDelSel').onclick = async () => { if (!(await confirmBox('Hapus ' + selected.size + ' item?', 'Semua yang dipilih akan dihapus permanen.', 'Hapus'))) return; try { await api('delete', { body: { paths: [...selected].map((n) => join(cwd, n)) } }); } catch (e) { toast(e.message, 'err'); } loadFiles(); };
+$('#bMkdir').onclick = async () => { const n = await ask('Nama folder', ''); if (n && n.trim()) { try { await api('mkdir', { body: { path: join(cwd, n.trim()) } }); } catch (e) { toast(e.message, 'err'); } loadFiles(); } };
+$('#bNew').onclick = async () => { const n = await ask('Nama file baru', '', 'contoh: config.js'); if (n && n.trim()) openEditor(join(cwd, n.trim()), true); };
+$('#bUpload').onclick = () => {
+  const b = openModal(`<h4>Upload</h4><p style="margin:0 0 4px;color:#c8d3dc;font-size:13.5px;line-height:1.5">Tanpa batas ukuran &amp; jumlah file. Setiap file dicek ulang setelah terunggah. File <b>.zip</b> bisa langsung diekstrak.</p><div class="row" style="flex-direction:column"><button class="btn blue" id="mF">Pilih file</button><button class="btn gray" id="mD">Pilih folder</button><button class="btn gray" id="mX">Batal</button></div>`);
+  $('#mF', b).onclick = () => { closeModal(); $('#upFiles').click(); }; $('#mD', b).onclick = () => { closeModal(); $('#upFolder').click(); }; $('#mX', b).onclick = closeModal;
+};
+$('#upFiles').onchange = (e) => { const l = [...e.target.files].map((f) => ({ file: f, path: join(cwd, f.name) })); e.target.value = ''; runUploads(l); };
+$('#upFolder').onchange = (e) => { const l = [...e.target.files].map((f) => ({ file: f, path: join(cwd, f.webkitRelativePath || f.name) })); e.target.value = ''; runUploads(l); };
+
+/* drag & drop (termasuk folder) */
+async function readEntry(en, prefix) {
+  if (en.isFile) return [await new Promise((r, j) => en.file((f) => r({ file: f, path: prefix + en.name }), j))];
+  const out = []; const rd = en.createReader(); let batch;
+  do { batch = await new Promise((r, j) => rd.readEntries(r, j)); for (const e of batch) out.push(...(await readEntry(e, prefix + en.name + '/'))); } while (batch.length);
+  return out;
+}
+addEventListener('dragover', (e) => { if (tab !== 'files' || openFile) return; e.preventDefault(); $('#t-files').classList.add('dropzone'); });
+addEventListener('dragleave', (e) => { if (!e.relatedTarget) $('#t-files').classList.remove('dropzone'); });
+addEventListener('drop', async (e) => {
+  if (tab !== 'files' || openFile) return; e.preventDefault(); $('#t-files').classList.remove('dropzone');
+  const list = []; const its = [...(e.dataTransfer.items || [])];
+  try {
+    if (its.length && its[0].webkitGetAsEntry) { for (const it of its) { const en = it.webkitGetAsEntry(); if (en) list.push(...(await readEntry(en, cwd === '/' ? '/' : cwd + '/'))); } }
+    else for (const f of e.dataTransfer.files) list.push({ file: f, path: join(cwd, f.name) });
+  } catch (er) { return toast('Gagal membaca file yang di-drop: ' + er.message, 'err'); }
+  runUploads(list.map((x) => ({ file: x.file, path: x.path.replace(/\/+/g, '/') })));
+});
+
+/* ---------- upload manager: potongan 512KB, retry otomatis, verifikasi server, tanpa batas ---------- */
+const CH = 512 * 1024; const UP = { items: [], running: false };
+const toB64 = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.slice(r.result.indexOf(',') + 1)); r.onerror = () => rej(new Error('Gagal membaca file lokal')); r.readAsDataURL(blob); });
+async function sendChunk(body) {
+  for (let k = 0; ; k++) {
+    try { return await api('fileChunk', { body, quiet: true }); }
+    catch (e) { if (/Sesi berakhir/.test(e.message) || k >= 5) throw e; await sleep(500 * (k + 1) * (k + 1)); }
+  }
+}
+async function uploadOne(it) {
+  const f = it.file, n = Math.ceil(f.size / CH);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      it.state = 'up'; it.pct = 0; renderUp();
+      if (n === 0) await sendChunk({ path: it.path, i: 0, n: 0, size: 0, data: '' });
+      else for (let i = 0; i < n; i++) {
+        const data = await toB64(f.slice(i * CH, (i + 1) * CH));
+        const r = await sendChunk({ path: it.path, i, n, size: f.size, data });
+        it.pct = Math.round(((i + 1) / n) * 100); renderUp();
+        if (i === n - 1 && !r.complete) throw new Error('potongan file tidak lengkap, mengulang');
+      }
+      it.state = 'ok'; it.pct = 100; return true;
+    } catch (e) { it.err = e.message; if (/Sesi berakhir/.test(e.message)) break; await sleep(800 * (attempt + 1)); }
+  }
+  it.state = 'fail'; return false;
+}
+async function drain() {
+  if (UP.running) return; UP.running = true;
+  for (;;) {
+    const pending = UP.items.filter((i) => i.state === 'wait'); if (!pending.length) break;
+    let idx = 0;
+    await Promise.all(Array.from({ length: Math.min(3, pending.length) }, async () => { while (idx < pending.length) { await uploadOne(pending[idx++]); renderUp(); } }));
+  }
+  UP.running = false; finishUploads();
+}
+async function runUploads(list) {
+  if (!list.length) return;
+  if (!UP.running) UP.items = UP.items.filter((i) => i.state === 'fail'); // batch baru: buang yang sudah sukses
+  UP.items.push(...list.map((x) => ({ ...x, state: 'wait', pct: 0 })));
+  renderUp(); drain();
+}
+function renderUp() {
+  const box = $('#upbox'); if (!UP.items.length) return box.classList.add('hide');
+  box.classList.remove('hide');
+  const total = UP.items.length, done = UP.items.filter((i) => i.state === 'ok').length, fail = UP.items.filter((i) => i.state === 'fail').length;
+  const pct = Math.round(UP.items.reduce((s, i) => s + (i.state === 'ok' ? 100 : i.pct || 0), 0) / total);
+  const show = UP.items.filter((i) => i.state !== 'ok').slice(-6);
+  box.innerHTML = `<h5><span>${UP.running ? 'Mengunggah' : fail ? 'Selesai dengan masalah' : 'Selesai'} · ${done}/${total} file${fail ? ' · ' + fail + ' gagal' : ''}</span><span>${!UP.running ? '<button class="x" id="upX" title="Tutup">✕</button>' : pct + '%'}</span></h5>
+    <div class="bar"><b style="width:${pct}%"></b></div>
+    <ul>${show.map((i) => `<li class="${i.state}"><span>${esc(i.path)}</span><span>${i.state === 'fail' ? 'gagal' : i.state === 'up' ? i.pct + '%' : 'menunggu'}</span></li>`).join('')}</ul>
+    ${fail && !UP.running ? '<div class="row" style="margin-top:10px"><button class="btn blue sm" id="upRetry">Coba lagi yang gagal</button></div>' : ''}`;
+  const x = $('#upX'); if (x) x.onclick = () => { UP.items = UP.items.filter((i) => i.state === 'fail'); renderUp(); };
+  const rt = $('#upRetry'); if (rt) rt.onclick = () => { UP.items.filter((i) => i.state === 'fail').forEach((i) => { i.state = 'wait'; i.pct = 0; }); renderUp(); drain(); };
+}
+async function finishUploads() {
+  renderUp(); if (tab === 'files' && !openFile) loadFiles();
+  const ok = UP.items.filter((i) => i.state === 'ok'), fail = UP.items.filter((i) => i.state === 'fail');
+  if (fail.length) toast(`${fail.length} file gagal. Tekan "Coba lagi yang gagal".`, 'err'); else toast(`${ok.length} file berhasil diunggah`, 'ok');
+  const zips = ok.filter((i) => isZip(i.path) && !i.asked); zips.forEach((i) => (i.asked = true));
+  if (!fail.length) setTimeout(() => { if (!UP.running && UP.items.every((i) => i.state === 'ok')) { UP.items = []; renderUp(); } }, 4000);
+  for (const z of zips) { if (await confirmBox('Ekstrak ' + z.path.split('/').pop() + '?', 'File ZIP sudah terunggah. Ekstrak (unzip) sekarang?', 'Ekstrak')) await unarchive(z.path); }
+}
+
+/* ---------- unarchive (unzip di server, bertahap dengan progress) ---------- */
+async function unarchive(path) {
+  let info;
+  try { info = await api('unzipInfo', { query: { path } }); } catch (e) { return toast(e.message, 'err'); }
+  const name = path.split('/').pop(), dir = path.replace(/\/[^/]*$/, '') || '/';
+  const opts = await new Promise((res) => {
+    const b = openModal(`<h4>Unarchive ${esc(name)}</h4>
+      <p style="margin:0;color:#c8d3dc;font-size:13.5px">${info.files} file · ${fmtBytes(info.totalSize)} setelah diekstrak</p>
+      <label class="f">Ekstrak ke folder</label><input class="in" id="uDir" value="${esc(dir)}" autocomplete="off" autocapitalize="off">
+      ${info.root ? `<label class="chk"><input type="checkbox" id="uStrip" checked><span>Lepas folder pembungkus <b>${esc(info.root)}/</b><small>Isi langsung masuk ke folder tujuan</small></span></label>` : ''}
+      ${info.heavy ? `<label class="chk"><input type="checkbox" id="uHeavy" checked><span>Lewati node_modules / __MACOSX / .git (${info.heavy} file)<small>Tidak dipakai di Vercel &amp; menghabiskan kuota Redis. Hilangkan centang jika tetap ingin semuanya.</small></span></label>` : ''}
+      <label class="chk"><input type="checkbox" id="uDel"><span>Hapus file ZIP setelah selesai</span></label>
+      <div class="row"><button class="btn gray" id="uNo">Batal</button><button class="btn blue" id="uGo">Ekstrak</button></div>`);
+    $('#uNo', b).onclick = () => { closeModal(); res(null); };
+    $('#uGo', b).onclick = () => { const o = { into: $('#uDir', b).value || dir, strip: Boolean($('#uStrip', b) && $('#uStrip', b).checked), skipHeavy: Boolean($('#uHeavy', b) && $('#uHeavy', b).checked), del: $('#uDel', b).checked }; closeModal(); res(o); };
+  });
+  if (!opts) return;
+  const b = openModal(`<h4>Mengekstrak…</h4><div class="prog"><b id="pB"></b></div><div id="pT" style="font-size:13.5px;color:#c8d3dc">Menyiapkan…</div><div class="fl" id="pF"></div>`);
+  let from = 0, wrote = 0, skipped = 0; const failed = []; let tries = 0;
+  try {
+    for (;;) {
+      try {
+        const r = await api('unzip', { body: { path, into: opts.into, from, strip: opts.strip, skipHeavy: opts.skipHeavy }, quiet: true });
+        tries = 0; from = r.next; wrote += r.wrote; skipped += r.skipped; failed.push(...r.failed);
+        $('#pB', b).style.width = Math.round((from / Math.max(1, r.total)) * 100) + '%';
+        $('#pT', b).textContent = `${from}/${r.total} entri · ${wrote} file tertulis${skipped ? ' · ' + skipped + ' dilewati' : ''}${failed.length ? ' · ' + failed.length + ' gagal' : ''}`;
+        if (r.done) break;
+      } catch (e) { if (/Sesi berakhir/.test(e.message) || ++tries > 4) throw e; $('#pT', b).textContent = 'Koneksi bermasalah, mengulang… (' + tries + '/4)'; await sleep(1000 * tries); }
+    }
+    if (opts.del && !failed.length) await api('delete', { body: { paths: [path] } }).catch(() => {});
+    $('#modalRoot .box').innerHTML = `<h4>${failed.length ? 'Selesai dengan masalah' : 'Selesai ✓'}</h4><p style="margin:0;color:#c8d3dc;font-size:14px;line-height:1.5">${wrote} file berhasil diekstrak ke <b>${esc(opts.into)}</b>${skipped ? `, ${skipped} dilewati` : ''}${failed.length ? `, <span style="color:#ffb4b4">${failed.length} gagal</span>` : ''}.</p>${failed.length ? `<div class="fl">${failed.slice(0, 80).map((f) => esc(f.name + ' — ' + f.error)).join('<br>')}</div>` : ''}<div class="row"><button class="btn blue" id="uOk">OK</button></div>`;
+    $('#uOk').onclick = () => { closeModal(); loadFiles(); };
+  } catch (e) { closeModal(); toast('Unarchive gagal: ' + e.message, 'err'); }
+  loadFiles();
+}
+
+/* ---------- editor + syntax highlight ---------- */
+const KW = 'import|from|export|default|const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|class|extends|async|await|try|catch|finally|throw|typeof|instanceof|in|of|null|undefined|true|false|this|global|module|require|static|void|delete';
+const TOK = new RegExp('(\\/\\/[^\\n]*|\\/\\*[\\s\\S]*?\\*\\/)|("(?:[^"\\\\\\n]|\\\\.)*"|\'(?:[^\'\\\\\\n]|\\\\.)*\'|`(?:[^`\\\\]|\\\\.)*`)|\\b(' + KW + ')\\b|\\b(\\d+(?:\\.\\d+)?)\\b|\\b([A-Za-z_$][\\w$]*)(?=\\()', 'g');
+function highlight(code, lang) {
+  if (code.length > 150000 || (lang !== 'JavaScript' && lang !== 'JSON')) return esc(code) + '\n';
+  let out = '', last = 0, m; TOK.lastIndex = 0;
+  while ((m = TOK.exec(code))) {
+    out += esc(code.slice(last, m.index));
+    const cls = m[1] ? 'c' : m[2] ? 's' : m[3] ? 'k' : m[4] ? 'n' : 'f';
+    out += `<span class="tk-${cls}">${esc(m[0])}</span>`; last = m.index + m[0].length;
+    if (m[0].length === 0) TOK.lastIndex++;
+  }
+  return out + esc(code.slice(last)) + '\n';
+}
+let hlRaf = 0;
+function refreshEditor() {
+  cancelAnimationFrame(hlRaf);
+  hlRaf = requestAnimationFrame(() => {
+    const v = $('#ta').value; $('#hl').innerHTML = highlight(v, $('#lang').value);
+    const n = v.split('\n').length; $('#gut').textContent = Array.from({ length: n }, (_, i) => i + 1).join('\n');
+    syncScroll();
+  });
+}
+function syncScroll() { const t = $('#ta'); $('#hl').scrollTop = t.scrollTop; $('#hl').scrollLeft = t.scrollLeft; $('#gut').scrollTop = t.scrollTop; }
+async function openEditor(path, isNew = false, size = 0) {
+  try {
+    let content = ''; if (!isNew) content = (await api('read', { query: { path } })).content;
+    openFile = path; $('#fileList').classList.add('hide'); $('#fileEdit').classList.remove('hide');
+    $('#edCrumb').innerHTML = crumbHtml(path, true); $('#ta').value = content;
+    $('#lang').value = /\.json$/i.test(path) ? 'JSON' : /\.md$/i.test(path) ? 'Markdown' : /\.(c?js|mjs)$/i.test(path) ? 'JavaScript' : 'Plain Text';
+    refreshEditor(); $('#ta').scrollTop = 0;
+  } catch (e) {
+    if (/Download/.test(e.message)) { if (await confirmBox('Tidak bisa dibuka di editor', e.message, 'Download')) downloadFile(path, path.split('/').pop()).catch((er) => toast(er.message, 'err')); }
+    else toast(e.message, 'err');
+  }
+  void size;
+}
+$('#edCrumb').onclick = (e) => { const a = e.target.closest('a'); if (!a || a.dataset.file) return; openFile = null; $('#fileEdit').classList.add('hide'); $('#fileList').classList.remove('hide'); loadFiles(a.dataset.p); };
+$('#ta').oninput = refreshEditor; $('#ta').onscroll = syncScroll; $('#lang').onchange = refreshEditor;
+$('#ta').onkeydown = (e) => {
+  if (e.key === 'Tab') { e.preventDefault(); const t = e.target, s = t.selectionStart; t.value = t.value.slice(0, s) + '  ' + t.value.slice(t.selectionEnd); t.selectionStart = t.selectionEnd = s + 2; refreshEditor(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); $('#bSave').click(); }
+};
+$('#bSave').onclick = async () => { try { await api('write', { body: { path: openFile, content: $('#ta').value } }); toast('File disimpan', 'ok'); } catch (e) { toast(e.message, 'err'); } };
+
+/* ---------- schedules / keepalive ---------- */
+async function loadSchedules() {
+  const [info, cfg] = await Promise.all([api('info'), api('config')]).catch(() => []); if (!info) return;
+  $('#kaUrl').value = info.base + '/api/keepalive'; $('#autoPing').checked = cfg.autoPing; setAutoPing(cfg.autoPing);
+}
+$('#kaCopy').onclick = () => { navigator.clipboard.writeText($('#kaUrl').value).then(() => toast('URL disalin', 'ok')); };
+$('#kaPing').onclick = async () => {
+  try { const r = await fetch('/api/keepalive', { cache: 'no-store' }); const j = await r.json(); $('#kaOut').textContent = JSON.stringify(j, null, 2); $('#kaOut').classList.remove('hide'); toast(j.ok ? 'Server merespons' : 'Ada masalah', j.ok ? 'ok' : 'err'); }
+  catch (e) { toast(e.message, 'err'); }
+};
+function setAutoPing(on) { clearInterval(pingT); if (on) pingT = setInterval(() => fetch('/api/keepalive', { cache: 'no-store' }).catch(() => {}), 240000); }
+$('#autoPing').onchange = async (e) => { try { await api('config', { body: { autoPing: e.target.checked } }); setAutoPing(e.target.checked); toast(e.target.checked ? 'Auto-ping aktif' : 'Auto-ping mati', 'ok'); } catch (er) { toast(er.message, 'err'); } };
+
+/* ---------- startup ---------- */
+let nodeSel = '';
+async function loadStartup() {
+  try {
+    const c = await api('config'); nodeSel = c.nodeChosen || c.nodeRuntime.replace(/^v(\d+).*/, '$1');
+    $('#tkBox').innerHTML = `<div class="kv"><span>Token bot</span><span>${c.hasToken ? esc(c.tokenHint) + ' <small style="color:#86efac">terdeteksi' + (c.tokenSource ? ' dari ' + esc(c.tokenSource) : '') + '</small>' : '<small style="color:#fbbf24">belum terdeteksi — tekan Start</small>'}</span></div><div class="kv"><span>File utama</span><span>${esc(c.entry || c.entryAuto || '— belum ada script —')}${c.entry ? '' : ' <small style="color:#9aa8b5">(otomatis)</small>'}</span></div>`;
+    $('#sEntry').value = c.entry;
+    $('#arOn').checked = c.autoRestart; $('#arCpu').value = c.cpuLimit; $('#arStreak').value = c.cpuStreak;
+    $('#nodeNote').innerHTML = `Runtime sekarang: <b>${esc(c.nodeRuntime)}</b>. ` + (c.vercelApi ? 'Tombol di bawah mengubah setelan Node.js project lewat Vercel API.' : 'Untuk menerapkan otomatis, set <code>VERCEL_TOKEN</code> di Environment Variables; tanpa itu panel hanya menyimpan pilihan.') + ' Versi abu-abu tidak tersedia di Vercel.';
+    $('#nodes').innerHTML = c.nodeVersions.map((n) => `<label class="${n.ok ? '' : 'dis'}"><span class="t">NodeJS ${n.v}<small>${n.ok ? (c.nodeRuntime.startsWith('v' + n.v + '.') ? 'sedang dipakai' : 'tersedia di Vercel') : esc(n.why)}</small></span><input type="radio" name="nv" value="${n.v}" ${n.ok ? '' : 'disabled'} ${n.v === nodeSel ? 'checked' : ''}></label>`).join('');
+  } catch (e) { toast(e.message, 'err'); }
+}
+$('#nodes').onchange = (e) => { nodeSel = e.target.value; };
+$('#sSave').onclick = async () => { try { await api('config', { body: { entry: $('#sEntry').value } }); toast('Tersimpan. Tekan Restart agar berlaku.', 'ok'); loadStartup(); } catch (e) { toast(e.message, 'err'); } };
+$('#arSave').onclick = async () => { try { await api('config', { body: { autoRestart: $('#arOn').checked, cpuLimit: $('#arCpu').value, cpuStreak: $('#arStreak').value } }); toast('Auto-restart disimpan', 'ok'); loadStartup(); } catch (e) { toast(e.message, 'err'); } };
+$('#nApply').onclick = async () => { try { const j = await api('nodeversion', { body: { version: nodeSel } }); toast(j.note, 'ok'); } catch (e) { toast(e.message, 'err'); } };
+
+/* ---------- settings ---------- */
+async function loadSettings() {
+  try {
+    const s = await api('status'); const i = await api('info');
+    const rows = [['Login sebagai', 'Admin ' + s.admin + (s.admin === '1' ? ' (ADMIN_PASSWORD)' : ' (ADMIN_PASSWORD' + s.admin + ')')], ['Jumlah admin', s.admins], ['Address', s.address], ['Runtime Node.js', s.nodeRuntime], ['Penyimpanan', s.persistent ? 'Redis (permanen)' : 'Memori sementara'], ['Status', s.status], ['Pesan diproses', s.requests], ['Auto-restart', s.autoRestart ? 'aktif (CPU ≥ ' + s.cpuLimit + '%) · terjadi ' + s.restarts + '×' : 'mati'], ['Run terakhir', s.lastRun ? new Date(s.lastRun).toLocaleString('id-ID') + ' (' + s.lastMs + ' ms)' : '-'], ['Webhook URL', i.base + '/api/webhook']];
+    $('#kv').innerHTML = rows.map(([k, v]) => `<div class="kv"><span>${k}</span><span>${esc(v)}</span></div>`).join('');
+  } catch (e) { toast(e.message, 'err'); }
+}
+$('#bRecount').onclick = async () => { try { const r = await api('recount'); toast(`Disk: ${fmtBytes(r.total)} dari ${r.files} file`, 'ok'); loadSettings(); } catch (e) { toast(e.message, 'err'); } };
+$('#whInfo').onclick = async () => { try { const j = await api('webhookinfo'); $('#whOut').textContent = JSON.stringify({ expected: j.expected, ...j.info }, null, 2); $('#whOut').classList.remove('hide'); } catch (e) { toast(e.message, 'err'); } };
+
+boot();
+</script>
+</body>
+</html>
