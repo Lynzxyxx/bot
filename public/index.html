@@ -10,9 +10,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#2b3846; --bg2:#34434f; --card:#3b4a58; --card2:#4a5967; --line:#4f5f6e;
-  --text:#e8edf2; --muted:#9aa8b5; --blue:#2563eb; --blue2:#3b82f6; --gray:#5a6877; --red:#dc2626;
-  --term:#121a22; --cyan:#22b8d4; --yellow:#f5c542; --green:#34d399; --editor:#1e2233;
+  --bg:#120a1f; --bg2:#1b1030; --card:#201536; --card2:#2a1c47; --line:#3d2a5c;
+  --text:#eee6ff; --muted:#a699c4; --blue:#7c3aed; --blue2:#9d5cf5; --gray:#4b3870; --red:#e23b6d;
+  --term:#0c0718; --cyan:#c77dff; --yellow:#f2c14e; --green:#34d399; --editor:#160f28;
+  --accent:#a855f7; --accent2:#6d28d9; --kill:#be123c;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:Roboto,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px}
@@ -168,20 +169,91 @@ pre.json{background:var(--term);border-radius:4px;padding:12px;overflow:auto;fon
 .toast.err{border-color:#b91c1c;color:#ffb4b4}.toast.ok{border-color:#15803d;color:#a7f3d0}
 footer{text-align:center;color:#8a98a6;font-size:12px;padding:22px 0 30px}
 @media(min-width:720px){.stats{grid-template-columns:repeat(4,1fr)}.charts{grid-template-columns:repeat(3,1fr)}.term{height:52vh}}
+
+/* === tema ungu "Aurora" — dekorasi dibuat dengan CSS/SVG sendiri, bukan aset pihak lain === */
+html,body{background:radial-gradient(1200px 600px at 20% -10%, #3a1a66 0%, transparent 60%), radial-gradient(900px 500px at 100% 0%, #5b1fae33 0%, transparent 55%), var(--bg)}
+.hero{position:relative;margin:12px 12px 0;border-radius:18px;overflow:hidden;background:
+    radial-gradient(500px 260px at 15% 0%, #7c3aed55, transparent 60%),
+    radial-gradient(500px 300px at 100% 10%, #c77dff40, transparent 55%),
+    linear-gradient(160deg, #241242 0%, #150a28 70%);
+  border:1px solid #432a6b; padding:16px 16px 14px; box-shadow:0 10px 30px #00000055}
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;background-image:
+    radial-gradient(1px 1px at 20% 30%, #fff8 1px, transparent 1px),
+    radial-gradient(1px 1px at 70% 60%, #fff6 1px, transparent 1px),
+    radial-gradient(1.5px 1.5px at 85% 20%, #fff9 1px, transparent 1px),
+    radial-gradient(1px 1px at 40% 80%, #fff5 1px, transparent 1px);
+  background-size:100% 100%}
+.hero-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+.menuBtn{background:#ffffff14;border:1px solid #ffffff22;width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#e9defb}
+.menuBtn svg{width:19px;height:19px}
+.connPill{display:flex;align-items:center;gap:7px;background:#ffffff12;border:1px solid #ffffff22;padding:7px 13px;border-radius:999px;font-size:13px;font-weight:600;color:#e4dbfa}
+.connPill .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px #34d39999}
+.connPill.off .dot{background:var(--red);box-shadow:0 0 8px #e23b6d99}
+.avatarBtn{width:38px;height:38px;border-radius:11px;background:#ffffff14;border:1px solid #ffffff22;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#e9defb}
+.hero-id{display:flex;align-items:center;justify-content:space-between;margin-top:16px;position:relative;z-index:1}
+.hero-id h1{margin:0;font-size:26px;letter-spacing:.3px;background:linear-gradient(90deg,#fff,#d9c6ff 60%,#c77dff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-id p{margin:2px 0 0;color:#c7aef0;font-size:13px;font-weight:500}
+.heroIcons{display:flex;gap:8px}
+.heroIcons button{width:34px;height:34px;border-radius:10px;background:#ffffff10;border:1px solid #ffffff1c;color:#e4dbfa;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.heroIcons svg{width:16px;height:16px}
+
+/* tabs sebagai pill (dekat tema hero) */
+.tabs{display:flex;gap:8px;overflow-x:auto;background:none;scrollbar-width:none;border-bottom:0;position:sticky;top:0;z-index:5;padding:14px 12px 4px}
+.tab{flex:0 0 auto;padding:11px 16px;color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:999px;cursor:pointer;font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:6px}
+.tab.on{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;box-shadow:0 4px 16px #7c3aed55}
+.tab svg{width:15px;height:15px}
+
+/* kartu umum (glow) */
+.card,.stat,.item,#upbox,.menu,.modal .box,.term,.editor,.gut,.code textarea,.login .card{box-shadow:0 2px 10px #0000003a}
+.card{border:1px solid var(--line)}
+
+/* stat card dgn sparkline nempel di bawah angka */
+.stat{position:relative;overflow:hidden;border:1px solid var(--line)}
+.stat .spark{position:absolute;left:0;right:0;bottom:0;height:26px;opacity:.55;pointer-events:none}
+.stat .ic{width:30px;height:30px;border-radius:9px;background:#ffffff12;display:flex;align-items:center;justify-content:center;margin-bottom:8px;color:var(--cyan)}
+.stat .ic svg{width:16px;height:16px}
+
+/* Server Details + Actions (gaya seperti referensi) */
+.detailCard .row2{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #3d2a5c55;font-size:13.5px}
+.detailCard .row2:last-child{border-bottom:0}
+.detailCard .row2 span:first-child{color:var(--muted)}
+.actionsGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.actionsGrid .abtn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:#fff;cursor:pointer;font-size:12.5px;font-weight:600}
+.actionsGrid .abtn svg{width:18px;height:18px}
+.actionsGrid .abtn.start{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
+.actionsGrid .abtn.kill{color:#ffd0da}
+.actionsGrid .abtn:disabled{opacity:.4;cursor:not-allowed}
+
+/* tombol sinkron dependency */
+.syncBar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}
+.syncBar span{font-size:13px;color:#d8cdf0}
+
 </style>
 </head>
 <body>
 <div id="ptbar"></div>
 <div class="wrap">
-  <div class="top">
-    <div class="brand">Pterodactyl</div>
-    <div class="icons" id="icons" hidden>
-      <button title="Files" onclick="go('files')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
-      <button title="Console" onclick="go('console')"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></svg></button>
-      <button title="Pengaturan" onclick="go('settings')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></button>
-      <button title="Keluar" onclick="logout()"><span class="avatar"></span></button>
+  <div class="hero">
+    <div class="hero-top">
+      <button class="menuBtn" id="menuBtn" title="Menu" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <span style="flex:1"></span>
+      <span class="connPill off" id="connPill" hidden><span class="dot"></span><span id="connTxt">Offline</span></span>
+      <button class="avatarBtn" id="avatarBtn" title="Akun" hidden onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-4 4.2-6 7-6s5.8 2 7 6"/></svg></button>
+    </div>
+    <div class="hero-id">
+      <div>
+        <h1 id="panelName">Pterodactyl</h1>
+        <p id="panelSub">Server Panel</p>
+      </div>
+      <div class="heroIcons" id="heroIcons" hidden>
+        <button title="Muat ulang" onclick="pollStatus();pollConsole();toast('Diperbarui','ok')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg></button>
+        <button title="Console" onclick="go('console')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m4 17 6-5-6-5M12 19h8"/></svg></button>
+        <button title="Pengaturan" onclick="go('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></button>
+        <button title="Bantuan" onclick="toast('Butuh bantuan? Cek README di repo GitHub-mu.')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.3 2.4c-.8.3-1.3 1-1.3 1.9v.3"/><path d="M12 17h.01"/></svg></button>
+      </div>
     </div>
   </div>
+  <div class="icons" id="icons" hidden style="display:none"></div>
 
   <div id="login" class="login hide">
     <div class="card">
@@ -195,29 +267,41 @@ footer{text-align:center;color:#8a98a6;font-size:12px;padding:22px 0 30px}
 
   <div id="app" class="hide">
     <nav class="tabs" id="tabs">
-      <button class="tab on" data-t="console">Console</button>
-      <button class="tab" data-t="files">Files</button>
-      <button class="tab" data-t="schedules">Schedules</button>
-      <button class="tab" data-t="startup">Startup</button>
-      <button class="tab" data-t="settings">Settings</button>
+      <button class="tab on" data-t="console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m4 17 6-5-6-5M12 19h8"/></svg>Console</button>
+      <button class="tab" data-t="files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>File Manager</button>
+      <button class="tab" data-t="databases"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5" rx="7" ry="2.6"/><path d="M5 5v14c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V5"/><path d="M5 12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6"/></svg>Databases</button>
+      <button class="tab" data-t="schedules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Schedules</button>
+      <button class="tab" data-t="startup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12 12 5l7 7M12 5v14"/></svg>Startup</button>
+      <button class="tab" data-t="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>Settings</button>
     </nav>
     <main>
       <div id="banner"></div>
 
       <!-- CONSOLE -->
       <section id="t-console">
-        <div class="row">
-          <button class="btn blue" id="bStart">Start</button>
-          <button class="btn gray" id="bRestart">Restart</button>
-          <button class="btn red" id="bStop">Stop</button>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)">
+            <span style="font-weight:700;display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m4 17 6-5-6-5M12 19h8"/></svg>Console</span>
+            <button class="btn gray sm" id="bClearTerm" title="Clear">Clear</button>
+          </div>
+          <div class="term" id="term" style="margin:0;border-radius:0"></div>
+          <div class="cmd"><span>»</span><input id="cmd" placeholder="Type a command..." autocomplete="off" autocapitalize="off" spellcheck="false"></div>
         </div>
-        <div class="term" id="term"></div>
-        <div class="cmd"><span>»</span><input id="cmd" placeholder="Type a command..." autocomplete="off" autocapitalize="off" spellcheck="false"></div>
         <div class="stats" id="stats"></div>
-        <div class="charts">
-          <div class="chart"><header><span>Memory usage</span><b id="chMemV">-</b></header><canvas id="chMem"></canvas></div>
-          <div class="chart"><header><span>CPU load</span><b id="chCpuV">-</b></header><canvas id="chCpu"></canvas></div>
-          <div class="chart"><header><span>Network <small style="color:#9aa8b5">(in / out per detik)</small></span><b id="chNetV">-</b></header><canvas id="chNet"></canvas></div>
+
+        <div class="card detailCard">
+          <h3 style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/></svg>Server Details</h3>
+          <div id="serverDetails"></div>
+        </div>
+
+        <div class="card">
+          <h3 style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>Actions</h3>
+          <div class="actionsGrid">
+            <button class="abtn start" id="bStart"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7Z"/></svg>Start</button>
+            <button class="abtn" id="bStop"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>Stop</button>
+            <button class="abtn" id="bRestart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg>Restart</button>
+            <button class="abtn kill" id="bKill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2 9 9l-6 1 4.5 4.5L6 21l6-3 6 3-1.5-6.5L21 10l-6-1-3-7Z"/></svg>Kill</button>
+          </div>
         </div>
       </section>
 
@@ -232,6 +316,7 @@ footer{text-align:center;color:#8a98a6;font-size:12px;padding:22px 0 30px}
           <input type="file" id="upFiles" multiple hidden>
           <input type="file" id="upFolder" webkitdirectory multiple hidden>
           <div class="crumbrow"><input type="checkbox" id="selAll" title="Pilih semua"><div class="crumb" id="crumb"></div></div>
+          <div class="syncBar hide" id="syncBar"><span>📦 package.json terdeteksi di folder ini</span><button class="btn blue sm" id="bSyncDeps">Sinkronkan dependencies</button></div>
           <div class="list" id="list"></div>
           <div class="selbar hide" id="selbar"><span id="selCount"></span><button class="btn red sm" id="bDelSel">Delete</button></div>
         </div>
@@ -242,6 +327,20 @@ footer{text-align:center;color:#8a98a6;font-size:12px;padding:22px 0 30px}
             <select id="lang"><option>JavaScript</option><option>JSON</option><option>Markdown</option><option>Plain Text</option></select>
             <button class="btn save" id="bSave">SAVE CONTENT</button>
           </div>
+        </div>
+      </section>
+
+      <!-- DATABASES -->
+      <section id="t-databases" class="hide">
+        <div class="card">
+          <h3>Penyimpanan (Upstash Redis)</h3>
+          <p>Semua file, konfigurasi, dan log server ini disimpan di Redis milikmu sendiri — bukan di disk Vercel (yang memang tidak permanen di serverless).</p>
+          <div id="dbInfo"></div>
+        </div>
+        <div class="card">
+          <h3>Isolasi per admin</h3>
+          <p>Setiap admin (ADMIN_PASSWORD, ADMIN_PASSWORD2, …) punya ruang penyimpanan sendiri di Redis yang sama — file dan statistik tidak pernah tercampur antar admin.</p>
+          <div id="dbAdmins"></div>
         </div>
       </section>
 
@@ -369,7 +468,8 @@ function confirmBox(title, text = '', yes = 'Ya, lanjut') {
 async function boot() {
   const st = await fetch('/api/panel?a=setup').then((r) => r.json()).catch(() => ({}));
   if (token) { try { await api('status', { quiet: true }); showApp(); return; } catch { token = ''; localStorage.removeItem('ptero_token'); } }
-  $('#login').classList.remove('hide'); $('#app').classList.add('hide'); $('#icons').hidden = true;
+  $('#login').classList.remove('hide'); $('#app').classList.add('hide');
+  ['menuBtn','connPill','avatarBtn','heroIcons'].forEach((id) => { $('#' + id).hidden = true; });
   if (st.configured === false) $('#setupWarn').classList.remove('hide');
 }
 $('#loginBtn').onclick = async () => {
@@ -378,7 +478,9 @@ $('#loginBtn').onclick = async () => {
 };
 $('#pw').onkeydown = (e) => { if (e.key === 'Enter') $('#loginBtn').click(); };
 function logout(silent) { token = ''; localStorage.removeItem('ptero_token'); clearTimeout(pollTimer); clearInterval(pingT); if (!silent) toast('Anda keluar'); boot(); }
-function showApp() { $('#login').classList.add('hide'); $('#app').classList.remove('hide'); $('#icons').hidden = false; go('console'); schedulePoll(0); }
+function showApp() { $('#login').classList.add('hide'); $('#app').classList.remove('hide');
+  ['menuBtn','connPill','avatarBtn','heroIcons'].forEach((id) => { $('#' + id).hidden = false; });
+  go('console'); schedulePoll(0); }
 
 /* ---------- tabs ---------- */
 function go(t) {
@@ -389,6 +491,7 @@ function go(t) {
   if (t === 'startup') loadStartup();
   if (t === 'schedules') loadSchedules();
   if (t === 'settings') loadSettings();
+  if (t === 'databases') loadDatabases();
   if (t === 'console') { lastConsole = ''; pollConsole(); pollStatus(); }
 }
 $('#tabs').onclick = (e) => { const b = e.target.closest('.tab'); if (b) go(b.dataset.t); };
@@ -407,35 +510,57 @@ async function tick() {
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { touch(); schedulePoll(0); } });
 
 /* ---------- console + indikator hidup ---------- */
-const S = { mem: [], cpu: [], inb: [], outb: [] }; const MAXPT = 40;
+const S = { mem: [], cpu: [], inb: [], outb: [], disk: [] }; const MAXPT = 40;
 let lastStatus = null, lastNet = null, upBase = 0, upAt = 0;
 const push = (arr, v) => { arr.push(v); if (arr.length > MAXPT) arr.shift(); };
-
-function meter(pct, hot) { return `<div class="meter"><b class="${hot ? 'hot' : ''}" style="width:${Math.max(0, Math.min(100, pct))}%"></b></div>`; }
+const ICN = {
+  addr: '<path d="M12 21s7-6.5 7-11.5A7 7 0 0 0 5 9.5C5 14.5 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.3"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  cpu: '<rect x="7" y="7" width="10" height="10" rx="1.5"/><rect x="2.5" y="10" width="2.5" height="4"/><rect x="19" y="10" width="2.5" height="4"/><rect x="10" y="2.5" width="4" height="2.5"/><rect x="10" y="19" width="4" height="2.5"/>',
+  mem: '<rect x="3" y="7" width="18" height="10" rx="1.5"/><path d="M7 7V4M12 7V4M17 7V4M7 20v-3M12 20v-3M17 20v-3"/>',
+  disk: '<ellipse cx="12" cy="5" rx="7" ry="2.6"/><path d="M5 5v14c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V5"/>',
+  down: '<path d="M12 4v12m0 0 4-4m-4 4-4-4"/><path d="M4 20h16"/>',
+  up: '<path d="M12 20V8m0 0 4 4m-4-4-4 4"/><path d="M4 20h16"/>',
+  chat: '<path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/>',
+};
+const ico = (p) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+function statCard(key, label, value, iconKey, extra = '') {
+  return `<div class="stat"><div class="ic">${ico(ICN[iconKey])}</div><small>${label}</small><strong>${value}</strong>${extra}<canvas class="spark" id="sp_${key}"></canvas></div>`;
+}
 function renderStats(s) {
   lastStatus = s; upBase = s.uptime; upAt = Date.now();
   const off = s.status !== 'running';
-  const cls = s.status === 'running' ? 'run live' : s.status === 'starting' ? 'start live' : 'off';
   const label = { running: 'Running', starting: 'Starting', offline: 'Offline' }[s.status] || s.status;
-  const dim = off ? ' dimmed' : '';
   const cpu = Number(s.cpu) || 0;
-  $('#stats').innerHTML = `
-    <div class="stat ${off ? 'off' : 'run'}"><small>Address</small><strong>${esc(s.address || '-')}</strong></div>
-    <div class="stat ${cls}"><small>Uptime</small><strong id="upv">${off ? label : fmtUp(s.uptime)}</strong></div>
-    <div class="stat${dim}"><small>CPU Load</small><strong>${off ? 'Offline' : cpu.toFixed(2) + '%'} ${off ? '' : '<i>/ ∞</i>'}</strong>${off ? '' : meter(cpu, cpu >= (s.cpuLimit || 90))}</div>
-    <div class="stat${dim}"><small>Memory</small><strong>${off ? 'Offline' : fmtBytes(s.memory)} ${off ? '' : '<i>/ ∞</i>'}</strong>${off ? '' : meter((s.memory / (1024 * 1024 * 1024)) * 100, false)}</div>
-    <div class="stat"><small>Disk</small><strong>${fmtBytes(s.disk)} <i>/ ∞</i></strong></div>
-    <div class="stat${dim}"><small>Network (Inbound)</small><strong>${off ? 'Offline' : fmtBytes(s.netIn)}</strong></div>
-    <div class="stat${dim}"><small>Network (Outbound)</small><strong>${off ? 'Offline' : fmtBytes(s.netOut)}</strong></div>
-    <div class="stat"><small>Pesan diproses</small><strong>${s.requests} <i>${s.errors ? '(' + s.errors + ' error)' : ''}${s.restarts ? ' · ' + s.restarts + '× auto-restart' : ''}</i></strong></div>`;
-  $('#bStart').disabled = s.status !== 'offline'; $('#bStop').disabled = s.status === 'offline';
+  $('#stats').innerHTML =
+    statCard('addr', 'Address', esc(s.address || '-'), 'addr') +
+    statCard('up', 'Uptime', `<span id="upv">${off ? label : fmtUp(s.uptime)}</span>`, 'clock') +
+    statCard('cpu', 'CPU Load', off ? 'Offline' : cpu.toFixed(2) + '%', 'cpu') +
+    statCard('mem', 'Memory', off ? 'Offline' : fmtBytes(s.memory), 'mem') +
+    statCard('disk', 'Disk', fmtBytes(s.disk), 'disk') +
+    statCard('in', 'Network In', off ? 'Offline' : fmtBytes(s.netIn) + '/s', 'down') +
+    statCard('out', 'Network Out', off ? 'Offline' : fmtBytes(s.netOut) + '/s', 'up') +
+    statCard('req', 'Pesan diproses', s.requests + (s.errors ? ` <i style="font-style:normal;color:#ff9db0">(${s.errors} err)</i>` : ''), 'chat');
+  const btn = (id, en) => { $(id).disabled = !en; };
+  btn('#bStart', s.status === 'offline'); btn('#bStop', s.status !== 'offline'); btn('#bRestart', s.status !== 'offline'); btn('#bKill', s.status !== 'offline' || s.requests > 0 || s.errors > 0);
+  $('#connPill').classList.toggle('off', off); $('#connTxt').textContent = off ? label : 'Connected';
+  $('#serverDetails').innerHTML = `
+    <div class="row2"><span>Server Name</span><span>${esc(s.botUsername ? '@' + s.botUsername : (s.address || '-'))}</span></div>
+    <div class="row2"><span>Node.js</span><span>${esc(s.nodeRuntime)}</span></div>
+    <div class="row2"><span>Region</span><span>${esc(s.region || '-')}</span></div>
+    <div class="row2"><span>Admin</span><span>#${esc(s.admin)}${s.admins > 1 ? ` dari ${s.admins}` : ''}</span></div>
+    <div class="row2"><span>Status</span><span style="color:${off ? '#ff8aa3' : '#34d399'};font-weight:700">● ${esc(label)}</span></div>`;
   renderBanner();
-  // data grafik
+  // data grafik (sparkline kecil per kartu)
   const now = Date.now(); let inRate = 0, outRate = 0;
   if (lastNet) { const dt = Math.max(1, (now - lastNet.t) / 1000); inRate = Math.max(0, (s.netIn - lastNet.i) / dt); outRate = Math.max(0, (s.netOut - lastNet.o) / dt); }
   lastNet = { t: now, i: s.netIn, o: s.netOut };
-  push(S.mem, off ? 0 : s.memory); push(S.cpu, off ? 0 : cpu); push(S.inb, inRate); push(S.outb, outRate);
-  drawCharts();
+  push(S.mem, off ? 0 : s.memory); push(S.cpu, off ? 0 : cpu); push(S.inb, inRate); push(S.outb, outRate); push(S.disk, s.disk);
+  drawCardSparks();
+}
+function drawCardSparks() {
+  const map = [['sp_cpu', S.cpu, '#c77dff', 100], ['sp_mem', S.mem, '#9d5cf5'], ['sp_disk', S.disk, '#7c3aed'], ['sp_in', S.inb, '#34d399'], ['sp_out', S.outb, '#f2c14e']];
+  for (const [id, d, color, max] of map) { const cv = document.getElementById(id); if (cv) spark(cv, [{ d, color }], { max }); }
 }
 function renderBanner() {
   const s = lastStatus; let h = '';
@@ -457,13 +582,7 @@ function spark(cv, series, { max, min = 0 } = {}) {
     c.lineTo(pts[pts.length - 1][0], h); c.lineTo(pts[0][0], h); c.closePath(); c.fillStyle = color + '26'; c.fill();
   });
 }
-function drawCharts() {
-  const last = (a) => (a.length ? a[a.length - 1] : 0);
-  spark($('#chMem'), [{ d: S.mem, color: '#60a5fa' }]); $('#chMemV').textContent = fmtBytes(last(S.mem));
-  spark($('#chCpu'), [{ d: S.cpu, color: '#22b8d4' }], { max: 100 }); $('#chCpuV').textContent = last(S.cpu).toFixed(2) + '%';
-  spark($('#chNet'), [{ d: S.inb, color: '#34d399' }, { d: S.outb, color: '#a78bfa' }]); $('#chNetV').textContent = fmtBytes(last(S.inb)) + ' / ' + fmtBytes(last(S.outb));
-}
-addEventListener('resize', () => { if (tab === 'console') drawCharts(); });
+addEventListener('resize', () => { if (tab === 'console') drawCardSparks(); });
 
 async function pollStatus() { if (!token) return; try { renderStats(await api('status', { quiet: true })); } catch (e) {} }
 const ANSI16 = ['#6b7280', '#ef4444', '#22c55e', '#eab308', '#60a5fa', '#d946ef', '#22d3ee', '#e5e7eb', '#9ca3af', '#f87171', '#4ade80', '#facc15', '#93c5fd', '#e879f9', '#67e8f9', '#ffffff'];
@@ -501,12 +620,16 @@ async function pollConsole() {
   } catch (e) {}
 }
 async function power(action) {
-  const all = ['#bStart', '#bRestart', '#bStop'].map((s) => $(s)); all.forEach((b) => (b.disabled = true));
-  try { await api('power', { body: { action } }); toast(action === 'stop' ? 'Server dihentikan' : 'Server berjalan', 'ok'); }
-  catch (e) { toast(e.message, 'err'); }
+  const all = ['#bStart', '#bRestart', '#bStop', '#bKill'].map((s) => $(s)); all.forEach((b) => (b.disabled = true));
+  try {
+    await api('power', { body: { action } });
+    toast(action === 'stop' ? 'Server dihentikan' : action === 'kill' ? 'Server dipaksa berhenti & statistik direset' : 'Server berjalan', 'ok');
+  } catch (e) { toast(e.message, 'err'); }
   all.forEach((b) => (b.disabled = false)); lastConsole = ''; pollConsole(); pollStatus();
 }
 $('#bStart').onclick = () => power('start'); $('#bRestart').onclick = () => power('restart'); $('#bStop').onclick = () => power('stop');
+$('#bKill').onclick = async () => { if (await confirmBox('Kill server?', 'Memutus koneksi paksa, membuang update yang masih antre, mengosongkan console, dan mereset statistik (pesan/error) ke 0. Beda dari Stop biasa yang tidak mereset apa pun.', 'Kill')) power('kill'); };
+$('#bClearTerm').onclick = async () => { try { await api('command', { body: { cmd: 'clear' } }); lastConsole = ''; pollConsole(); } catch (e) { toast(e.message, 'err'); } };
 $('#cmd').onkeydown = async (e) => {
   if (e.key !== 'Enter') return; const v = e.target.value; e.target.value = ''; if (!v.trim()) return;
   try { await api('command', { body: { cmd: v } }); } catch (er) { toast(er.message, 'err'); } lastConsole = ''; pollConsole(); pollStatus();
@@ -531,6 +654,7 @@ async function loadFiles(dir = cwd) {
   try {
     const j = await api('files', { query: { dir } }); cwd = j.dir; items = j.items; selected.clear();
     $('#crumb').innerHTML = crumbHtml(cwd); renderList();
+    $('#syncBar').classList.toggle('hide', !items.some((it) => it.type === 'file' && it.name === 'package.json'));
   } catch (e) {
     $('#list').innerHTML = `<div class="errcard"><button onclick="loadFiles()" title="Muat ulang">⟳</button>${ERR_SVG}<h2>Something went wrong</h2><p>${esc(e.message)}</p></div>`;
   }
@@ -710,6 +834,25 @@ async function unarchive(path) {
   loadFiles();
 }
 
+/* ---------- sinkronkan dependencies ke GitHub ---------- */
+$('#bSyncDeps').onclick = async () => {
+  let df, ds2;
+  try { df = await api('depsFromFile', { query: { path: join(cwd, 'package.json') } }); }
+  catch (e) { return toast(e.message, 'err'); }
+  try { ds2 = await api('depsStatus'); } catch (e) { ds2 = { configured: false }; }
+  if (!ds2.configured) {
+    return openModal(`<h4>Sinkronisasi belum aktif</h4><p style="margin:0;color:#c8d3dc;font-size:14px;line-height:1.5">Set env <code>GITHUB_TOKEN</code> (Personal Access Token dengan akses "Contents: Read &amp; write" ke repo ini) dan <code>GITHUB_REPO</code> (format <code>namaAkun/namaRepo</code>) di Vercel → Environment Variables, lalu Redeploy.<br><br>Tanpa ini, package.json harus ditambahkan manual di GitHub seperti biasa.</p><div class="row"><button class="btn blue" id="mOk2">Mengerti</button></div>`), ($('#mOk2').onclick = closeModal);
+  }
+  const rows = df.total ? Object.entries(df.wanted).map(([k, v]) => `<div class="kv"><span>${esc(k)}</span><span style="color:${df.missing.includes(k) ? '#fbbf24' : '#86efac'}">${esc(v)} ${df.missing.includes(k) ? '(belum ada)' : '(sudah ada)'}</span></div>`).join('') : '<p style="color:#9aa8b5">Tidak ada dependencies di package.json ini.</p>';
+  const b = openModal(`<h4>Sinkronkan dependencies</h4><p style="margin:0 0 6px;color:#c8d3dc;font-size:13.5px">Repo: <code>${esc(ds2.repo)}</code>. Paket di bawah akan ditambahkan ke package.json GitHub (paket yang sudah ada tidak dihapus).</p>${rows}<div class="row"><button class="btn gray" id="dNo">Batal</button><button class="btn blue" id="dGo">Sinkronkan${df.missing.length ? ' (' + df.missing.length + ' baru)' : ''}</button></div>`);
+  $('#dNo', b).onclick = closeModal;
+  $('#dGo', b).onclick = async () => {
+    try { const r = await api('depsSync', { body: { dependencies: df.wanted } }); closeModal();
+      toast(r.changed ? `Disinkronkan: ${[...r.added, ...r.updated].join(', ') || '-'}${r.redeployed ? ' — redeploy dipicu' : ' — Redeploy manual diperlukan'}` : 'Sudah sinkron, tidak ada perubahan', 'ok'); }
+    catch (e) { closeModal(); toast(e.message, 'err'); }
+  };
+};
+
 /* ---------- editor + syntax highlight ---------- */
 const KW = 'import|from|export|default|const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|class|extends|async|await|try|catch|finally|throw|typeof|instanceof|in|of|null|undefined|true|false|this|global|module|require|static|void|delete';
 const TOK = new RegExp('(\\/\\/[^\\n]*|\\/\\*[\\s\\S]*?\\*\\/)|("(?:[^"\\\\\\n]|\\\\.)*"|\'(?:[^\'\\\\\\n]|\\\\.)*\'|`(?:[^`\\\\]|\\\\.)*`)|\\b(' + KW + ')\\b|\\b(\\d+(?:\\.\\d+)?)\\b|\\b([A-Za-z_$][\\w$]*)(?=\\()', 'g');
@@ -789,12 +932,23 @@ $('#nApply').onclick = async () => { try { const j = await api('nodeversion', { 
 async function loadSettings() {
   try {
     const s = await api('status'); const i = await api('info');
-    const rows = [['Login sebagai', 'Admin ' + s.admin + (s.admin === '1' ? ' (ADMIN_PASSWORD)' : ' (ADMIN_PASSWORD' + s.admin + ')')], ['Jumlah admin', s.admins], ['Address', s.address], ['Runtime Node.js', s.nodeRuntime], ['Penyimpanan', s.persistent ? 'Redis (permanen)' : 'Memori sementara'], ['Status', s.status], ['Pesan diproses', s.requests], ['Auto-restart', s.autoRestart ? 'aktif (CPU ≥ ' + s.cpuLimit + '%) · terjadi ' + s.restarts + '×' : 'mati'], ['Run terakhir', s.lastRun ? new Date(s.lastRun).toLocaleString('id-ID') + ' (' + s.lastMs + ' ms)' : '-'], ['Webhook URL', i.base + '/api/webhook']];
+    const rows = [['Login sebagai', 'Admin ' + s.admin + (s.admin === '1' ? ' (ADMIN_PASSWORD)' : ' (ADMIN_PASSWORD' + s.admin + ')')], ['Jumlah admin', s.admins], ['Address', s.address], ['Region', s.region], ['Runtime Node.js', s.nodeRuntime], ['Penyimpanan', s.persistent ? 'Redis (permanen)' : 'Memori sementara'], ['Status', s.status], ['Pesan diproses', s.requests], ['Auto-restart', s.autoRestart ? 'aktif (CPU ≥ ' + s.cpuLimit + '%) · terjadi ' + s.restarts + '×' : 'mati'], ['Kill (paksa)', 'terjadi ' + (s.kills || 0) + '×'], ['Run terakhir', s.lastRun ? new Date(s.lastRun).toLocaleString('id-ID') + ' (' + s.lastMs + ' ms)' : '-'], ['Webhook URL', i.webhookUrl || (i.base + '/api/webhook')]];
     $('#kv').innerHTML = rows.map(([k, v]) => `<div class="kv"><span>${k}</span><span>${esc(v)}</span></div>`).join('');
   } catch (e) { toast(e.message, 'err'); }
 }
 $('#bRecount').onclick = async () => { try { const r = await api('recount'); toast(`Disk: ${fmtBytes(r.total)} dari ${r.files} file`, 'ok'); loadSettings(); } catch (e) { toast(e.message, 'err'); } };
 $('#whInfo').onclick = async () => { try { const j = await api('webhookinfo'); $('#whOut').textContent = JSON.stringify({ expected: j.expected, ...j.info }, null, 2); $('#whOut').classList.remove('hide'); } catch (e) { toast(e.message, 'err'); } };
+
+/* ---------- databases ---------- */
+async function loadDatabases() {
+  try {
+    const s = await api('status');
+    $('#dbInfo').innerHTML = `
+      <div class="kv"><span>Status koneksi</span><span style="color:${s.persistent ? '#34d399' : '#fbbf24'};font-weight:700">${s.persistent ? '● Tersambung' : '● Belum tersambung (memori sementara)'}</span></div>
+      <div class="kv"><span>Terpakai oleh server ini</span><span>${fmtBytes(s.disk)}</span></div>`;
+    $('#dbAdmins').innerHTML = `<div class="kv"><span>Admin aktif</span><span>${s.admins} akun</span></div><div class="kv"><span>Server ini milik</span><span>Admin #${s.admin}</span></div>`;
+  } catch (e) { toast(e.message, 'err'); }
+}
 
 boot();
 </script>

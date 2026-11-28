@@ -47,10 +47,37 @@ Endpoint `/api/keepalive` tetap disediakan: memeriksa webhook dan memasangnya ul
 > auto-refresh panel memakai sekitar 1 perintah/detik hanya saat panel terbuka & aktif — otomatis melambat
 > bila idle dan berhenti setelah 15 menit).
 
-## Multi-admin
+## Multi-admin — setiap admin = server sendiri
 
 Tambah admin dengan membuat env baru di Vercel: `ADMIN_PASSWORD2`, `ADMIN_PASSWORD3`, … (jumlah bebas,
 min. 6 karakter), lalu Redeploy. Menghapus env itu langsung mencabut akses admin tersebut.
+
+**Setiap admin punya server TERPISAH TOTAL**, bukan cuma login berbeda ke server yang sama:
+- File Manager, Console/log, konfigurasi (entry, auto-restart, dll.), token bot, dan URL webhook
+  masing-masing admin terisolasi penuh — tidak pernah saling terlihat atau tertimpa.
+- Setiap admin bisa upload & menjalankan **script bot Telegram yang sama sekali berbeda**, dengan
+  token bot berbeda pula.
+- Admin 1 (`ADMIN_PASSWORD`) memakai data yang sudah ada sebelum fitur ini (tidak perlu upload ulang).
+  Admin 2 dan seterusnya otomatis mendapat ruang kosong sendiri.
+- Tab **Databases** menampilkan status koneksi Redis dan berapa banyak admin yang aktif.
+
+## Sinkronisasi dependencies ke GitHub
+
+Kalau script yang di-upload butuh paket yang belum ada di `package.json` repo, panel bisa menambahkannya
+sendiri lewat GitHub API — tidak perlu edit manual setiap kali ganti-ganti SC.
+
+1. Buat **Personal Access Token** GitHub (Settings → Developer settings → Fine-grained tokens),
+   beri akses **Contents: Read and write** khusus ke repo panel ini.
+2. Di Vercel, tambahkan env: `GITHUB_TOKEN` (token di atas) dan `GITHUB_REPO` (format `namaAkun/namaRepo`).
+   Opsional: `GITHUB_BRANCH` (default `main`) dan `DEPLOY_HOOK_URL` agar redeploy otomatis setelah sinkron.
+3. **Jangan tempelkan token itu di chat atau di file yang ter-commit** — hanya taruh di Environment
+   Variables Vercel. Token ini punya akses tulis ke repo, jadi perlakukan seperti password.
+4. Upload/edit `package.json` SC-mu di tab **Files** — begitu terdeteksi, tombol
+   **"Sinkronkan dependencies"** muncul. Panel akan menambahkan paket yang belum ada ke `package.json`
+   GitHub (paket yang sudah ada **tidak pernah dihapus/ditimpa** tanpa alasan), lalu commit otomatis.
+5. Redeploy (otomatis kalau `DEPLOY_HOOK_URL` di-set, atau manual lewat Vercel).
+
+Tanpa `GITHUB_TOKEN`/`GITHUB_REPO`, tombol ini menampilkan instruksi manual seperti sebelumnya.
 
 ## Auto-restart (pemulih CPU)
 
@@ -118,6 +145,9 @@ Jangan tambahkan `engines.node` di package.json — itu menimpa setelan ini.
 - Webhook hanya menerima request dengan `secret_token` dari Telegram.
 - `bot.js` adalah kode yang dieksekusi server — jangan bagikan password panel.
 - Token yang terdeteksi dari script disimpan di Redis milikmu (cadangan: env `BOT_TOKEN` di Vercel).
+- `GITHUB_TOKEN` HANYA dibaca dari Environment Variable Vercel — panel tidak pernah menyimpannya di
+  Redis maupun menerimanya lewat input di tampilan, supaya token sekuat itu tidak tersimpan di tempat
+  yang kurang aman.
 
 ## Batasan jujur
 

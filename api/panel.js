@@ -1,10 +1,11 @@
 'use strict';
-const { fs, state, config, logs, PERSISTENT, norm, parentOf, baseName } = require('../lib/store');
+const { createStore, PERSISTENT, norm, parentOf, baseName } = require('../lib/store');
 const auth = require('../lib/auth');
 const control = require('../lib/control');
 const tg = require('../lib/telegram');
 const zipx = require('../lib/zip');
 const runner = require('../lib/runner');
+const github = require('../lib/github');
 
 // Versi Node yang diminta di panel. `ok` = benar-benar tersedia di Vercel (dicek Nov 2026).
 const NODE_VERSIONS = [
@@ -16,6 +17,15 @@ const NODE_VERSIONS = [
   { v: '20', ok: false, why: 'Node 20 sudah dinonaktifkan Vercel (1 Okt 2026)' },
 ];
 const EDITOR_MAX = 2 * 1024 * 1024; // hanya batas editor teks di browser, BUKAN batas upload
+
+// Kode region eksekusi Vercel (process.env.VERCEL_REGION) -> nama kota, untuk kartu "Server Details".
+// Data asli dari Vercel sendiri, bukan tebakan — kalau kodenya tidak ada di daftar, tampilkan apa adanya.
+const REGIONS = {
+  sin1: 'Singapore', hnd1: 'Tokyo', icn1: 'Seoul', bom1: 'Mumbai', hkg1: 'Hong Kong', syd1: 'Sydney',
+  iad1: 'Washington D.C., USA', sfo1: 'San Francisco, USA', pdx1: 'Portland, USA', cle1: 'Cleveland, USA',
+  gru1: 'São Paulo', cdg1: 'Paris', dub1: 'Dublin', fra1: 'Frankfurt', arn1: 'Stockholm', lhr1: 'London',
+  cpt1: 'Cape Town', dev1: 'lokal (dev)',
+};
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const bad = (res, code, msg) => res.status(code).json({ ok: false, error: msg });
@@ -49,7 +59,8 @@ module.exports = async (ctx) => {
 };
 `;
 
-async function detectEntry(cfgEntry) {
+async function detectEntry(store, cfgEntry) {
+  const { fs } = store;
   const pkg = await fs.readBuffer('/package.json').catch(() => null);
   for (const c of runner.entryCandidates(cfgEntry, pkg ? pkg.toString() : '')) {
     const st = await fs.stat(c);
@@ -58,7 +69,8 @@ async function detectEntry(cfgEntry) {
   return null;
 }
 
-async function seedIfEmpty() {
+async function seedIfEmpty(store) {
+  const { fs, config } = store;
   const cfg = await config.get();
   if (cfg.seeded) return;
   if (!(await fs.list('/')).length) {
@@ -69,16 +81,19 @@ async function seedIfEmpty() {
 }
 
 /* ---------- unzip (di server, bertahap supaya tidak kena batas waktu) ---------- */
-const ZC = (global.__ZIPC__ = global.__ZIPC__ || {});
-async function getZip(path) {
+const ZC = (global.__ZIPC__ = global.__ZIPC__ || new Map());
+async function getZip(store, path) {
+  const { fs } = store;
   const st = await fs.stat(path);
   if (!st || st.t !== 'f') throw new Error('File ZIP tidak ditemukan');
-  const key = `${path}:${st.m}:${st.s}`;
-  if (ZC.key === key && ZC.buf) return ZC;
+  const cacheKey = `${store.ns}:${path}:${st.m}:${st.s}`;
+  const cached = ZC.get(store.ns);
+  if (cached && cached.key === cacheKey) return cached;
   const buf = await fs.readBuffer(path);
   const entries = zipx.parseZip(buf);
-  ZC.key = key; ZC.buf = buf; ZC.entries = entries;
-  return ZC;
+  const rec = { key: cacheKey, buf, entries };
+  ZC.set(store.ns, rec);
+  return rec;
 }
 const isHeavy = (n) => /(^|\/)(node_modules|__MACOSX|\.git)(\/|$)/.test(n) || /(^|\/)\.DS_Store$/.test(n);
 function detectRoot(entries) {
@@ -98,9 +113,10 @@ function relPath(name, root) {
   return n.replace(/\/+$/, '');
 }
 
-async function unzipStep({ path, into, from, strip, skipHeavy }) {
+async function unzipStep(store, { path, into, from, strip, skipHeavy }) {
+  const { fs } = store;
   path = norm(path);
-  const z = await getZip(path);
+  const z = await getZip(store, path);
   const root = strip ? detectRoot(z.entries) : null;
   const base = norm(into || parentOf(path));
   const prefix = base === '/' ? '/' : base + '/';
@@ -136,7 +152,8 @@ async function unzipStep({ path, into, from, strip, skipHeavy }) {
 }
 
 /* ---------- Node version via Vercel API ---------- */
-async function applyNodeVersion(version) {
+async function applyNodeVersion(store, version) {
+  const { config, logs } = store;
   const item = NODE_VERSIONS.find((n) => n.v === String(version));
   if (!item) throw new Error('Versi tidak dikenal');
   if (!item.ok) throw new Error(`Node ${item.v} tidak bisa dipakai di Vercel: ${item.why}`);
@@ -163,16 +180,18 @@ async function applyNodeVersion(version) {
   return { saved: true, applied: true, redeployed, note: redeployed ? 'Redeploy dipicu otomatis. Tunggu ±1 menit.' : 'Node.js project diperbarui. Lakukan Redeploy agar berlaku (atau set DEPLOY_HOOK_URL agar otomatis).' };
 }
 
-async function runCommand(req, cmdline) {
+async function runCommand(store, req, cmdline) {
+  const { state, config, logs } = store;
   const [cmd, ...rest] = cmdline.trim().split(/\s+/);
   const args = rest.join(' ');
   const cfg = await config.get();
   await logs.add('container@pterodactyl~ ' + cmdline, 'host');
   switch ((cmd || '').toLowerCase()) {
-    case 'help': return logs.add('Perintah: help, status, clear, info, ping, webhook, restart, send <chat_id> <teks>', 'out');
+    case 'help': return logs.add('Perintah: help, status, clear, info, ping, webhook, restart, kill, send <chat_id> <teks>', 'out');
     case 'clear': return logs.clear();
-    case 'restart': { await control.stop(); await control.start(req); return null; }
-    case 'status': { const st = await state.get(); return logs.add(`status=${st.status} requests=${st.requests} errors=${st.errors} restarts=${st.restarts} node=${process.version}`, 'out'); }
+    case 'restart': { await control.stop(store); await control.start(store, req); return null; }
+    case 'kill': { await control.kill(store); return null; }
+    case 'status': { const st = await state.get(); return logs.add(`status=${st.status} requests=${st.requests} errors=${st.errors} restarts=${st.restarts} kills=${st.kills||0} node=${process.version}`, 'out'); }
     case 'info': {
       if (!cfg.botToken) return logs.add('BOT_TOKEN belum diisi.', 'err');
       const r = await tg.call(cfg.botToken, 'getMe');
@@ -211,6 +230,10 @@ module.exports = async (req, res) => {
     }
     const who = auth.isAuthed(req);
     if (!who) return bad(res, 401, 'Belum login');
+    // Setiap admin punya server sendiri yang terisolasi total: file, console, config, token bot,
+    // dan webhook-nya masing-masing tidak pernah bersinggungan dengan admin lain.
+    const store = createStore(who);
+    const { fs, state, config, logs } = store;
 
     switch (a) {
       case 'status': {
@@ -218,26 +241,28 @@ module.exports = async (req, res) => {
         const running = st.status === 'running';
         return res.json({
           ok: true, status: st.status, uptime: running && st.startedAt ? Date.now() - st.startedAt : 0,
-          address: (tg.baseUrl(req) || '').replace('https://', ''),
+          address: (tg.baseUrl(req) || '').replace('https://', '') + (who !== '1' ? ` (server #${who})` : ''),
           cpu: st.lastCpu, memory: st.lastMem, disk: usage, netIn: st.bytesIn, netOut: st.bytesOut,
-          requests: st.requests, errors: st.errors, lastMs: st.lastMs, lastRun: st.lastRun, restarts: st.restarts, lastAuto: st.lastAuto,
-          nodeRuntime: process.version, nodeChosen: cfg.nodeVersion, persistent: PERSISTENT, hasToken: Boolean(cfg.botToken),
+          requests: st.requests, errors: st.errors, lastMs: st.lastMs, lastRun: st.lastRun, restarts: st.restarts, kills: st.kills, lastAuto: st.lastAuto,
+          nodeRuntime: process.version, nodeChosen: cfg.nodeVersion, persistent: PERSISTENT, hasToken: Boolean(cfg.botToken), botUsername: cfg.botUsername,
           admin: who, admins: auth.adminCount(), autoRestart: cfg.autoRestart, cpuLimit: cfg.cpuLimit,
+          region: REGIONS[process.env.VERCEL_REGION] || process.env.VERCEL_REGION || 'tidak diketahui',
         });
       }
       case 'console': return res.json({ ok: true, lines: await logs.tail(250) });
       case 'power': {
         const act = body.action;
-        if (act === 'start') return res.json({ ok: true, ...(await control.start(req)) });
-        if (act === 'stop') { await control.stop(); return res.json({ ok: true }); }
-        if (act === 'restart') { await control.stop(); return res.json({ ok: true, ...(await control.start(req)) }); }
+        if (act === 'start') return res.json({ ok: true, ...(await control.start(store, req)) });
+        if (act === 'stop') { await control.stop(store); return res.json({ ok: true }); }
+        if (act === 'restart') { await control.stop(store); return res.json({ ok: true, ...(await control.start(store, req)) }); }
+        if (act === 'kill') { await control.kill(store); return res.json({ ok: true }); }
         return bad(res, 400, 'Aksi tidak dikenal');
       }
-      case 'command': await runCommand(req, String(body.cmd || '').slice(0, 1000)); return res.json({ ok: true });
+      case 'command': await runCommand(store, req, String(body.cmd || '').slice(0, 1000)); return res.json({ ok: true });
 
       /* ---- file manager ---- */
       case 'files': {
-        await seedIfEmpty();
+        await seedIfEmpty(store);
         return res.json({ ok: true, dir: norm(q.dir), items: await fs.list(q.dir) });
       }
       case 'read': {
@@ -265,7 +290,7 @@ module.exports = async (req, res) => {
 
       /* ---- unzip ---- */
       case 'unzipInfo': {
-        const z = await getZip(norm(q.path));
+        const z = await getZip(store, norm(q.path));
         const entries = z.entries;
         return res.json({
           ok: true, count: entries.length, files: entries.filter((e) => !e.dir).length,
@@ -273,7 +298,28 @@ module.exports = async (req, res) => {
           root: detectRoot(entries), heavy: entries.filter((e) => !e.dir && isHeavy(e.name)).length,
         });
       }
-      case 'unzip': return res.json({ ok: true, ...(await unzipStep(body)) });
+      case 'unzip': return res.json({ ok: true, ...(await unzipStep(store, body)) });
+
+      /* ---- sinkronisasi dependencies ke GitHub ---- */
+      case 'depsStatus': return res.json({ ok: true, configured: github.configured(), repo: process.env.GITHUB_REPO || '', hasHook: Boolean(process.env.DEPLOY_HOOK_URL) });
+      case 'depsFromFile': {
+        // baca dependencies dari sebuah package.json yang SUDAH ada di File Manager (hasil upload SC),
+        // bandingkan dengan paket yang benar-benar resolvable di deployment yang sedang jalan.
+        const p = norm(q.path || '/package.json');
+        const buf = await fs.readBuffer(p);
+        if (!buf) return bad(res, 404, `${p} tidak ditemukan di File Manager`);
+        let pkg; try { pkg = JSON.parse(buf.toString('utf8')); } catch { return bad(res, 400, `${p} bukan JSON yang valid`); }
+        const wanted = { ...(pkg.dependencies || {}) };
+        const dep = runner.checkDeps({ '/package.json': JSON.stringify({ dependencies: wanted }) });
+        return res.json({ ok: true, total: Object.keys(wanted).length, missing: dep.missing, wanted });
+      }
+      case 'depsSync': {
+        const wanted = body.dependencies && typeof body.dependencies === 'object' ? body.dependencies : null;
+        if (!wanted) return bad(res, 400, 'Tidak ada daftar dependencies yang dikirim');
+        const r = await github.syncDependencies(wanted);
+        if (r.changed) await logs.add(`[Pterodactyl Daemon]: Dependencies disinkronkan ke GitHub (${[...r.added, ...r.updated].join(', ') || '-'})${r.redeployed ? ' — redeploy dipicu' : ' — silakan Redeploy manual'}`, 'daemon');
+        return res.json({ ok: true, ...r });
+      }
 
       /* ---- startup / settings ---- */
       case 'config': {
@@ -289,7 +335,7 @@ module.exports = async (req, res) => {
           await config.set(upd);
         }
         const c = await config.get();
-        const entryAuto = await detectEntry(c.entry);
+        const entryAuto = await detectEntry(store, c.entry);
         return res.json({
           ok: true, entry: c.entry, entryAuto: entryAuto ? entryAuto.slice(1) : '', tokenSource: c.tokenSource, envVars: c.envVars, autoPing: c.autoPing,
           autoRestart: c.autoRestart, cpuLimit: c.cpuLimit, cpuStreak: c.cpuStreak,
@@ -298,14 +344,14 @@ module.exports = async (req, res) => {
           vercelApi: Boolean(process.env.VERCEL_TOKEN && (process.env.VERCEL_PROJECT_ID || process.env.VERCEL_PROJECT_NAME)),
         });
       }
-      case 'nodeversion': return res.json({ ok: true, ...(await applyNodeVersion(body.version)) });
+      case 'nodeversion': return res.json({ ok: true, ...(await applyNodeVersion(store, body.version)) });
       case 'webhookinfo': {
         const c = await config.get();
         if (!c.botToken) return bad(res, 400, 'BOT_TOKEN belum diisi');
         const r = await tg.call(c.botToken, 'getWebhookInfo');
-        return res.json({ ok: r.ok, info: r.result, expected: tg.baseUrl(req) + '/api/webhook', error: r.description });
+        return res.json({ ok: r.ok, info: r.result, expected: control.webhookUrl(req, who), error: r.description });
       }
-      case 'info': return res.json({ ok: true, base: tg.baseUrl(req), cron: '0 0 * * *' });
+      case 'info': return res.json({ ok: true, base: tg.baseUrl(req), cron: '0 0 * * *', webhookUrl: control.webhookUrl(req, who) });
       default: return bad(res, 404, 'Aksi tidak dikenal');
     }
   } catch (e) {
