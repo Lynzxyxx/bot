@@ -8,7 +8,7 @@
     "telegraf": "^4.16.3",
     "grammy": "^1.30.0",
     "node-telegram-bot-api": "^0.66.0",
-    "axios": "^1.7.0",
+    "axios": "^1.6.8",
     "node-fetch": "^2.7.0",
     "cheerio": "^1.0.0",
     "moment": "^2.30.1",
@@ -19,6 +19,8 @@
     "lodash": "^4.17.21",
     "fs-extra": "^11.2.0",
     "form-data": "^4.0.0",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "@whiskeysockets/baileys": "npm:@xayztech/baileys@latest",
+    "pino": "^9.6.0"
   }
 }
