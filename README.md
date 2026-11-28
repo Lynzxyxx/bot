@@ -29,6 +29,13 @@ Endpoint `/api/keepalive` tetap disediakan: memeriksa webhook dan memasangnya ul
 > Token dan ID owner **tidak diisi di panel**. Panel membaca token dari script itu sendiri
 > (argumen `new Telegraf(token)`, `config.js`, `settings.json`, atau `.env`). Owner/admin bot diatur di config script seperti biasa.
 
+## Branding (logo & gambar header)
+
+Logo (`public/assets/logo.jpg`) dan gambar header (`public/assets/hero.jpg`) adalah bawaan contoh —
+ganti saja dengan gambarmu sendiri (nama file harus sama persis) untuk mengganti tampilan panel.
+Nama "Lynzxyx" / "Pterodactyl Panel" di header diatur lewat atribut `id="panelName"` /
+`id="panelSub"` di `public/index.html` (cari `<h1 id="panelName">`), tinggal ganti teksnya.
+
 ## Fitur File Manager
 
 - **Upload tanpa batas ukuran & jumlah file** (file, banyak file, atau satu folder utuh; bisa drag & drop).
